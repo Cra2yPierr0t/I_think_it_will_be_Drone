@@ -19,7 +19,6 @@ typedef struct Operation Operation;
 struct Operation {
     Format format;  //命令フォーマット
     std::bitset<32> bin;   //バイナリ
-    uint32_t addr;  //アドレス
     uint8_t opcode;
     uint8_t rs1;
     uint8_t rs2;
@@ -39,6 +38,7 @@ void decode(Operation *operation){
 
     switch(operation->opcode){
         case: 0x33
+            operation->format = R_type;
             for(i = 0;i < 5;i++)
                 operation->rs1 |= operation->bin[i + 15] << i;
             for(i = 0;i < 5;i++)
@@ -51,8 +51,18 @@ void decode(Operation *operation){
                 operation->funct7 |= operation->bin[i + 25] << i;
             break;
         case: 0x13
-            for( = 0;i < 5;i++)
+        case: 0x03
+            operation->format = I_type;
+            for(i = 0;i < 5;i++)
                 operation->rs1 |= operation->bin[i + 15] << i;
+            for(i = 0;i < 5;i++)
+                operation->rd |= operation->bin[i + 7] << i;
+            for(i = 0;i < 3;i++)
+                operation->funct3 |= operation->bin[i + 12] << i;
+            for(i = 0;i < 12;i++)
+                operation->imm = operation->bin[i + 25] << i;
+            break;
+        case: 0x13
     }
 }
 
