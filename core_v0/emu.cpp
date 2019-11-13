@@ -4,8 +4,9 @@
 
 uint32_t reg[32];
 uint32_t pc = 0;
-std::vector<uint32_t> memory = {0x00000113, 0x00000193, 0x0640093, 0x00110113, 0x002181b3, 0xfe111ce3, 0x0000026f};
+std::vector<uint32_t> memory = {0x00000113, 0x00000193, 0x00640093, 0x00110113,  0x0000026f};
 
+//1111 1110 0001 0001 0001 1111 1 110 0011
 typedef enum {
     R_type,
     I_type,
@@ -70,7 +71,7 @@ void decode(Operation *operation){
             printf("rs1     = %d\n", operation->rs1);
             printf("rd      = %d\n", operation->rd);
             printf("funct3  = %d\n", operation->funct3);
-            printf("imm     = %d\n", operation->imm);
+            printf("imm     = %d\n\n", operation->imm);
             break;
         case 0x23:
             operation->format = S_type;
@@ -187,8 +188,8 @@ void execute(Operation *operation){
 }
 
 int main(int argc, char **argv){
-    int cnt = 0;
-    while(cnt != 20){
+    unsigned int cnt = 0;
+    while(cnt != 10){
         fetch(operation);
         decode(operation);
         execute(operation);
