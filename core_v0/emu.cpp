@@ -8,10 +8,10 @@
 
 uint32_t reg[32];
 uint32_t pc = 0;
-uint32_t memory[] = {0x00000113, 0x00000193, 0x00640093, 0x00110113, 0x002181b3, 0xfe111ce3, 0x0000026f};
+uint32_t memory[] = {0x00000113, 0x00000193, 0x06400093, 0x00110113, 0x002181b3, 0xfe111ce3, 0x0000026f};
 
-//1111 1110 0001 0001 0001 1111 1 110 0011
-//1011 0011
+//0000 0000 0110  0100 0 000 0000 1 001 0011
+
 typedef enum {
     R_type,
     I_type,
@@ -39,12 +39,19 @@ struct Operation {
 Operation *operation = new Operation;
 
 void fetch(Operation *operation){
-    printf("pc = %x\n", pc*4);
     operation->bin = memory[pc];
+    printf("operation = %08x, pc = %x\n", operation->bin, pc*4);
 }
 
 void decode(Operation *operation){
     int i;
+    operation->opcode = 0x00;
+    operation->rs1 = 0x00;
+    operation->rs2 = 0x00;
+    operation->rd = 0x00;
+    operation->funct3 = 0x00;
+    operation->funct7 = 0x00;
+    operation->imm = 0x00000000;
     for(i = 0;i < 7;i++){
         operation->opcode |= (operation->bin[i] << i);
     }
@@ -100,9 +107,10 @@ void decode(Operation *operation){
             for(i = 0;i < 10;i++)
                 operation->imm |= operation->bin[i + 20] << (i + 1);
             operation->imm |= operation->bin[19] << 11;
-            operation->imm |= operation->bin[31] << 20;
+            for(i = 0;i < 12;i++)
+                operation->imm |= operation->bin[31] << (i + 20);
             break;
-        case 0x73:
+        case 0x63:
             operation->format = B_type;
             for(i = 0;i < 5;i++)
                 operation->rs1 |= operation->bin[i + 15] << i;
@@ -115,7 +123,8 @@ void decode(Operation *operation){
                 operation->imm |= operation->bin[i + 8] << (i + 1);
             for(i = 0;i < 6;i++)
                 operation->imm |= operation->bin[i + 25] << (i + 5);
-            operation->imm |= operation->bin[31] << 12;
+            for(i = 0;i < 21;i++)
+                operation->imm |= operation->bin[31] << i + 11;
             break;
     }
 }
@@ -180,12 +189,11 @@ void execute(Operation *operation){
         break;
         case 0x6f:
             reg[operation->rd] = pc + 1;
-            pc = (uint32_t)(operation->imm / 4);
+            pc += (uint32_t)((signed int)operation->imm >> 2);
         break;
-        case 0x73:
-            if(reg[operation->rs1] == reg[operation->rs2]){
-                pc += (uint32_t)(operation->imm / 4);
-                printf("operation->imm / 4 = %x\n", (uint32_t)(operation->imm / 4));
+        case 0x63:
+            if(reg[operation->rs1] != reg[operation->rs2]){
+                pc += (uint32_t)((signed int)operation->imm >> 2);
             }else{
                 pc++;
             }
@@ -195,14 +203,14 @@ void execute(Operation *operation){
 
 int main(int argc, char **argv){
     unsigned int cnt = 0;
-    while(cnt != 10){
+    while(cnt != 310){
         fetch(operation);
         decode(operation);
         execute(operation);
         cnt++;
     }
-    for(int i = 0;i < 32; i++){
-        printf("reg[%d] = %d\n", i, reg[i]);
+    for(int i = 0;i < 8; i++){
+        printf("reg[%d] = %d\t| reg[%d] = %d\t| reg[%d] = %d\t| reg[%d] = %d\n", i, reg[i], i+8, reg[i+8], i+16, reg[i+16], i+24, reg[i+24]);
     }
     return 0;
 }
