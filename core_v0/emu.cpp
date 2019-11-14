@@ -1,7 +1,3 @@
-//                                  //
-//      TODO 符号拡張!!!!!          //
-//                                  //
-
 #include<iostream>
 #include<vector>
 #include<bitset>
@@ -9,8 +5,6 @@
 uint32_t reg[32];
 uint32_t pc = 0;
 uint32_t memory[] = {0x00000113, 0x00000193, 0x06400093, 0x00110113, 0x002181b3, 0xfe111ce3, 0x0000026f};
-
-//0000 0000 0110  0100 0 000 0000 1 001 0011
 
 typedef enum {
     R_type,
@@ -81,9 +75,6 @@ void decode(Operation *operation){
                 operation->funct3 |= operation->bin[i + 12] << i;
             for(i = 0;i < 12;i++)
                 operation->imm |= (operation->bin[i + 20] << i);
-            //printf("rs1     = %d\n", operation->rs1);
-            //printf("rd      = %d\n", operation->rd);
-            //printf("funct3  = %d\n", operation->funct3);
             break;
         case 0x23:
             operation->format = S_type;
