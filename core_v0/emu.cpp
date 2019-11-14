@@ -1,12 +1,17 @@
+//                                  //
+//      TODO 符号拡張!!!!!          //
+//                                  //
+
 #include<iostream>
 #include<vector>
 #include<bitset>
 
 uint32_t reg[32];
 uint32_t pc = 0;
-std::vector<uint32_t> memory = {0x00000113, 0x00000193, 0x00640093, 0x00110113,  0x0000026f};
+uint32_t memory[] = {0x00000113, 0x00000193, 0x00640093, 0x00110113, 0x002181b3, 0xfe111ce3, 0x0000026f};
 
 //1111 1110 0001 0001 0001 1111 1 110 0011
+//1011 0011
 typedef enum {
     R_type,
     I_type,
@@ -34,6 +39,7 @@ struct Operation {
 Operation *operation = new Operation;
 
 void fetch(Operation *operation){
+    printf("pc = %x\n", pc*4);
     operation->bin = memory[pc];
 }
 
@@ -68,10 +74,9 @@ void decode(Operation *operation){
                 operation->funct3 |= operation->bin[i + 12] << i;
             for(i = 0;i < 12;i++)
                 operation->imm |= (operation->bin[i + 20] << i);
-            printf("rs1     = %d\n", operation->rs1);
-            printf("rd      = %d\n", operation->rd);
-            printf("funct3  = %d\n", operation->funct3);
-            printf("imm     = %d\n\n", operation->imm);
+            //printf("rs1     = %d\n", operation->rs1);
+            //printf("rd      = %d\n", operation->rd);
+            //printf("funct3  = %d\n", operation->funct3);
             break;
         case 0x23:
             operation->format = S_type;
@@ -97,7 +102,7 @@ void decode(Operation *operation){
             operation->imm |= operation->bin[19] << 11;
             operation->imm |= operation->bin[31] << 20;
             break;
-        case 0x63:
+        case 0x73:
             operation->format = B_type;
             for(i = 0;i < 5;i++)
                 operation->rs1 |= operation->bin[i + 15] << i;
@@ -174,12 +179,13 @@ void execute(Operation *operation){
             }
         break;
         case 0x6f:
-            reg[operation->rd] = ++pc;
-            pc = operation->imm;
+            reg[operation->rd] = pc + 1;
+            pc = (uint32_t)(operation->imm / 4);
         break;
-        case 0x63:
+        case 0x73:
             if(reg[operation->rs1] == reg[operation->rs2]){
-                pc += operation->imm;
+                pc += (uint32_t)(operation->imm / 4);
+                printf("operation->imm / 4 = %x\n", (uint32_t)(operation->imm / 4));
             }else{
                 pc++;
             }
