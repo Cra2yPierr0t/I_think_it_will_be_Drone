@@ -4,7 +4,7 @@ module main_decoder(
     output [4:0] rd,
     output [4:0] rs1,
     output [4:0] rs2,
-    output [3:0] funct3,
+    output [2:0] funct3,
     output [6:0] funct7,
     output [11:0] imm_I,
     output [11:0] imm_S,

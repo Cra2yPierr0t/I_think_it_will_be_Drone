@@ -6,6 +6,7 @@ module alu_decoder(
 
 parameter I_INSTR = 7'b0010011;
 parameter R_INSTR = 7'b0110011;
+parameter B_INSTR = 7'b1100011;
 
 //format
 parameter ADD_SUB = 3'b000;
@@ -29,6 +30,24 @@ parameter ALU_SRL = 4'b0110;
 parameter ALU_SRA = 4'b0111;
 parameter ALU_OR = 4'b1000;
 parameter ALU_AND = 4'b1001;
+
+parameter BEQ = 3'b000;
+parameter BNE = 3'b001;
+parameter BLT = 3'b100;
+parameter BGE = 3'b101;
+parameter BLTU = 3'b110;
+parameter BGEU = 3'b111;
+//brach format
+//          |
+//          v
+//alu_ctrl table
+parameter ALU_BEQ = 4'b0000;
+parameter ALU_BNE = 4'b0000;
+parameter ALU_BLT = 4'b0011;
+parameter ALU_BGE = 4'b0011;
+parameter ALU_BLTU = 4'b0100;
+parameter ALU_BGEU = 4'b0100;
+
 
     assign alu_ctrl = alu_decode(opcode, funct3, funct7);
 
@@ -67,7 +86,7 @@ parameter ALU_AND = 4'b1001;
                         SLTU: alu_decode = ALU_SLTU;
                         XOR: alu_decode = ALU_XOR;
                         SRL_SRA: begin
-                            case(funt7)
+                            case(funct7)
                                 7'b0000000: alu_decode = ALU_SRL;
                                 7'b0100000: alu_deocde = ALU_SRA;
                             endcase
@@ -75,6 +94,16 @@ parameter ALU_AND = 4'b1001;
                         OR: alu_decode = ALU_OR;
                         AND: alu_decode = ALU_AND;
                         end
+                    endcase
+                end
+                B_INSTR: begin
+                    case(funct3)
+                        BEQ: alu_decode = ALU_BEQ;
+                        BNE: alu_decode = ALU_BNE;
+                        BLT: alu_decode = ALU_BLT;
+                        BGE: alu_decode = ALU_BGE;
+                        BLTU: alu_deocde = ALU_BLTU;
+                        BGEU: alu_deocde = ALU_BGEU;
                     endcase
                 end
             endcase
