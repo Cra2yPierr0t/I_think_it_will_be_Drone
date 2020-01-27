@@ -14,7 +14,7 @@ module regfile(
     assign rs2_data = register[rs2_addr];
 
     initial begin
-        register[0] = 32'h0000_00000;
+        register[0] = 32'h0000_0000;
     end
 
     always @(posedge clock) begin

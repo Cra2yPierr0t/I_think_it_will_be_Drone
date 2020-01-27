@@ -24,7 +24,7 @@ parameter ALU_AND = 4'b1001;
             case(alu_ctrl)
                 ALU_ADD : alu_exec = data_x + data_y;
                 ALU_SUB : alu_exec = data_x - data_y;
-                ALU_SLL : alu_exec = data_x << data_y
+                ALU_SLL : alu_exec = data_x << data_y;
                 ALU_SLT : alu_exec = $signed(data_x) < $signed(data_y);
                 ALU_SLTU: alu_exec = data_x < data_y;
                 ALU_XOR : alu_exec = data_x ^ data_y;

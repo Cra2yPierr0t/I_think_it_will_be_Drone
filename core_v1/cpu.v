@@ -34,6 +34,9 @@ module cpu(
     wire reg_imm_sel;   //0:reg 1:imm
     wire [31:0] imm_data;
 
+    wire [11:0] imm_B;
+    wire branch_ctrl; //0:notbranch 1:branch
+
     instr_mem instr_mem(.addr(pc), .instr(instr));
     main_decoder main_dec(.instr(instr), 
                           .rd(rd_addr), 
@@ -42,7 +45,8 @@ module cpu(
                           .funct3(funct3),
                           .funct7(funct7),
                           .imm_I(imm_I),
-                          .imm_S(offset_s));
+                          .imm_S(offset_s),
+                          .imm_B(imm_B));
     
     alu_decoder alu_dec(.opcode(opcode),
                         .funct3(funct3),
@@ -87,7 +91,14 @@ module cpu(
                       .r_data(dmem_r_data),
                       .clock(clock));
 
+    branch_controller branch_controller(.funct3(funct3),
+                                        .alu_out(alu_out),
+                                        .branch_ctrl(branch_ctrl));
     always @(posedge clock) begin
-        pc = pc + 4;
+        if(branch_ctrl) begin
+            pc = pc + {imm_B[11] ? 19'b11111_11111_11111_1111 : 19'b00000_00000_00000_0000, imm_B, 0};
+        end else begin
+            pc = pc + 4;
+        end
     end
 endmodule
