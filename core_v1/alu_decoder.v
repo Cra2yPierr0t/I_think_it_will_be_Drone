@@ -9,6 +9,8 @@ parameter R_INSTR = 7'b0110011;
 parameter B_INSTR = 7'b1100011;
 parameter LUI_INSTR = 7'b0110111;
 parameter AUIPC_INSTR = 7'b0010111;
+parameter JAL_INSTR = 7'b1101111;
+parameter JALR_INSTR = 7'b1100111;
 //format
 parameter ADD_SUB = 3'b000;
 parameter SLL     = 3'b001;
@@ -51,6 +53,8 @@ parameter ALU_BGEU = 4'b0100;
 
 parameter ALU_LUI = 4'b1010;
 parameter ALU_AUIPC = 4'b0000;
+parameter ALU_JAL = 4'b0000;
+parameter ALU_JALR = 4'b0000;
 //U format
     assign alu_ctrl = alu_decode(opcode, funct3, funct7);
 
@@ -111,6 +115,8 @@ parameter ALU_AUIPC = 4'b0000;
                 end
                 LUI_INSTR: alu_decode = ALU_LUI; 
                 AUIPC_INSTR: alu_deocde = ALU_AUIPC;
+                JAL_INSTR: alu_decode = ALU_JAL;
+                JALR_INSTR: alu_deocde = ALU_JALR;
             endcase
         end
     endfunction

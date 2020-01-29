@@ -21,7 +21,7 @@ module cpu(
     wire [31:0] rs2_data;
     wire reg_w_en;          //0:disable 1:enable
     wire [31:0] reg_w_data;
-    wire dmem_alu_sel;      //0:dmem 1:alu
+    wire [1:0] reg_w_sel;      //00:dmem 01:alu 10:pc+4
 
     wire [11:0] imm_I;
     wire [5:0] offset_s;
@@ -40,8 +40,12 @@ module cpu(
 
     wire [19:0] imm_U;
     wire [31:0] imm_U_data;
-    wire imm_U_I_sel;   //0:U   1:I
+    wire [1:0] imm_sel;   //00:U 01:I 10:J
     wire rs1_pc_sel;    //0:rs1 1:pc
+
+    wire [19:0] imm_J;
+
+    wire jump_en;   // 0:nojump 1:jump enable
 
     instr_mem instr_mem(.addr(pc), .instr(instr));
     main_decoder main_dec(.instr(instr), 
@@ -52,8 +56,9 @@ module cpu(
                           .funct7(funct7),
                           .imm_I(imm_I),
                           .imm_S(offset_s),
-                          .imm_B(imm_B)
-                          .imm_U(imm_U));
+                          .imm_B(imm_B),
+                          .imm_U(imm_U),
+                          .imm_J(imm_J));
     
     alu_decoder alu_dec(.opcode(opcode),
                         .funct3(funct3),
@@ -65,16 +70,21 @@ module cpu(
                                     .reg_w_en(reg_w_en),
                                     .dmem_w_en(d_mem_w_en),
                                     .store_load_sel(store_load_sel),
-                                    .dmem_alu_sel(dmem_alu_sel),
+                                    .reg_w_sel(reg_w_sel),
                                     .reg_imm_sel(reg_imm_sel),
-                                    .imm_U_I_sel(imm_U_I_sel),
-                                    .rs1_pc_sel(rs1_pc_sel));
+                                    .imm_I_sel(imm_I_sel),
+                                    .rs1_pc_sel(rs1_pc_sel),
+                                    .jump_en(jump_en));
 
     assign imm_I_data = (func3 == 3'b001 || func3 == 3'b101) ? {27'h0, imm_I[4:0]}
                                                            : imm_I[11] ? {20'hfffff, imm_I} 
                                                                        : {20'h00000, imm_I};   //Immidiateの符号拡張
     assign imm_U_data = {imm_U, 12'h000};
-    assign imm_data = imm_U_I_sel ? imm_I_data : imm_U_data;
+    assign imm_J_data = {imm_J[19] ? {8'hff, 3'b111} : 11'b0, imm_J, 0};
+
+    assign imm_data = (imm_sel == 2'b01) ? imm_I_data 
+                    : (imm_sel == 2'b00) ? imm_U_data
+                    : (imm_sel == 2'b10) ? imm_J_data : 32'h00000000;
 
     assign alu_data_x = rs1_pc_sel ? pc : rs1_data;
     assign alu_data_y = reg_imm_sel ? imm_data : rs2_data; 
@@ -84,7 +94,10 @@ module cpu(
             .data_y(alu_data_y),
             .alu_out(alu_out));
     
-    assign reg_w_data = dmem_alu_sel ? alu_out : dmem_r_data;
+    assign reg_w_data = (reg_w_sel == 2'b00) ? dmem_r_data
+                      : (reg_w_sel == 2'b01) ? alu_out
+                      : (reg_w_sel == 2'b10) ? pc + 4 : 32'h00000000;
+
     regfile regfile(.rd_addr(rd_addr),
                     .rs1_addr(rs1_addr),
                     .rs2_addr(rs2_addr),
@@ -106,13 +119,16 @@ module cpu(
                       .r_data(dmem_r_data),
                       .clock(clock));
 
-    branch_controller branch_controller(.funct3(funct3),
+    branch_controller branch_controller(.opcode(opcode),
+                                        .funct3(funct3),
                                         .alu_out(alu_out),
                                         .branch_ctrl(branch_ctrl));
 
     always @(posedge clock) begin
         if(branch_ctrl) begin
             pc = pc + {imm_B[11] ? 19'b11111_11111_11111_1111 : 19'b00000_00000_00000_0000, imm_B, 0};
+        end else if(jump_en) begin
+            pc = {alu_out[31:1], 1'b0};
         end else begin
             pc = pc + 4;
         end
