@@ -7,7 +7,8 @@ module alu_decoder(
 parameter I_INSTR = 7'b0010011;
 parameter R_INSTR = 7'b0110011;
 parameter B_INSTR = 7'b1100011;
-
+parameter LUI_INSTR = 7'b0110111;
+parameter AUIPC_INSTR = 7'b0010111;
 //format
 parameter ADD_SUB = 3'b000;
 parameter SLL     = 3'b001;
@@ -31,7 +32,7 @@ parameter ALU_SRA = 4'b0111;
 parameter ALU_OR = 4'b1000;
 parameter ALU_AND = 4'b1001;
 
-parameter BEQ = 3'b000;
+parameter BEQ = 3'b001;
 parameter BNE = 3'b001;
 parameter BLT = 3'b100;
 parameter BGE = 3'b101;
@@ -41,14 +42,16 @@ parameter BGEU = 3'b111;
 //          |
 //          v
 //alu_ctrl table
-parameter ALU_BEQ = 4'b0000;
-parameter ALU_BNE = 4'b0000;
+parameter ALU_BEQ = 4'b0001;
+parameter ALU_BNE = 4'b0001;
 parameter ALU_BLT = 4'b0011;
 parameter ALU_BGE = 4'b0011;
 parameter ALU_BLTU = 4'b0100;
 parameter ALU_BGEU = 4'b0100;
 
-
+parameter ALU_LUI = 4'b1010;
+parameter ALU_AUIPC = 4'b0000;
+//U format
     assign alu_ctrl = alu_decode(opcode, funct3, funct7);
 
     function [3:0] alu_decode(input [6:0] opcode,
@@ -106,6 +109,8 @@ parameter ALU_BGEU = 4'b0100;
                         BGEU: alu_deocde = ALU_BGEU;
                     endcase
                 end
+                LUI_INSTR: alu_decode = ALU_LUI; 
+                AUIPC_INSTR: alu_deocde = ALU_AUIPC;
             endcase
         end
     endfunction

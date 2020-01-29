@@ -14,6 +14,7 @@ parameter ALU_SRL = 4'b0110;
 parameter ALU_SRA = 4'b0111;
 parameter ALU_OR = 4'b1000;
 parameter ALU_AND = 4'b1001;
+parameter ALU_LUI = 4'b1010;
 
     assign alu_out = alu_exec(data_x, data_y, alu_ctrl);
 
@@ -32,6 +33,7 @@ parameter ALU_AND = 4'b1001;
                 ALU_SRA : alu_exec = $signed(data_x) >>> $signed(data_y);
                 ALU_OR  : alu_exec = data_x | data_y;
                 ALU_AND : alu_exec = data_x & data_y;
+                ALU_LUI : alu_exec = data_y;
             endcase
         end
     endfunction
