@@ -12,7 +12,7 @@ module computer(input clock,
     wire [31:0] _dmem_r_data;
     wire [31:0] rs2_data;
 
-    wire led_begin_flag = 0;
+    reg led_begin_flag = 0;
     reg [31:0] led_in_data;
     wire [31:0] led_state_reg;
 
@@ -37,13 +37,14 @@ module computer(input clock,
 
     always @(posedge clock) begin
         if(dmem_rw_addr == 32'h0000_03fc && dmem_w_en == 1'b1) begin
+            led_begin_flag <= 1;
             led_in_data <= rs2_data;
         end else begin
+            led_begin_flag <= 0;
             led_in_data <= led_in_data;
         end
     end
 
-    assign led_begin_flag = ((dmem_rw_addr == 32'h0000_03fc) && (dmem_w_en == 1)) ? 1 : 0;
     assign dmem_r_data = (dmem_rw_addr == 32'h0000_03f8) ? led_state_reg : _dmem_r_data;
 
     LED8 LED8(.in_data(led_in_data),

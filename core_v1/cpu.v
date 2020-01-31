@@ -85,7 +85,7 @@ module cpu(
                                                            : imm_I[11] ? {20'hfffff, imm_I} 
                                                                        : {20'h00000, imm_I};   //Immidiateの符号拡張
     assign imm_U_data = {imm_U, 12'h000};
-    assign imm_J_data = {imm_J[19] ? {8'hff, 3'b111} : 11'b0, imm_J, 1'b0};
+    assign imm_J_data = imm_J[19] ? {8'hff, 3'b111, imm_J, 1'b0} : {11'b0, imm_J, 1'b0};
 
     assign imm_data = (imm_sel == 2'b01) ? imm_I_data 
                     : (imm_sel == 2'b00) ? imm_U_data

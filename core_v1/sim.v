@@ -17,7 +17,7 @@ module sim();
     computer computer(.clock(clock));
 
     initial begin
-        #1000
+        #10000
         $finish;
     end
 endmodule
