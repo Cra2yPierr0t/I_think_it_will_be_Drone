@@ -6,7 +6,7 @@ module data_mem(
     output [31:0] r_data,
     input clock);
 
-    reg [7:0] mem[0:2048];
+    reg [7:0] mem[0:1023];
 
 //funct3
 //lb  -> 000

@@ -19,7 +19,7 @@ parameter BGEU = 3'b111;
                 7'b1100011:begin
                     case(funct3)
                         BEQ: branch_control = ~|alu_out;
-                        BNE: branch_control = ~&alu_out;
+                        BNE: branch_control = |alu_out;
                         BLT: branch_control = alu_out[0];
                         BGE: branch_control = ~alu_out[0];
                         BLTU: branch_control = alu_out[0];
