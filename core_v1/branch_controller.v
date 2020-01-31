@@ -25,8 +25,9 @@ parameter BGEU = 3'b111;
                         BLTU: branch_control = alu_out[0];
                         BGEU: branch_control = ~alu_out[0];
                     endcase
+                end
                 default: branch_control = 1'b0;
-            end
+            endcase
         end
     endfunction
 endmodule

@@ -13,15 +13,15 @@ parameter MEPC      = 12'h341;
 parameter MCAUSE    = 12'h342;
 parameter MTVAL     = 12'h343;
 parameter MIP       = 12'h344;
-    reg [31:0] csr_register[2:0];
-    assign csr_r_data = (csr_addr == MSTATUS)   ? csr_register[0]
-                      : (csr_addr == MIE)       ? csr_register[1]
-                      : (csr_addr == MTVEC)     ? csr_register[2]
-                      : (csr_addr == MSCRATCH)  ? csr_register[3]
-                      : (csr_addr == MEPC)      ? csr_register[4]
-                      : (csr_addr == MCAUSE)    ? csr_register[5]
-                      : (csr_addr == MTVAL)     ? csr_register[6]
-                      : (csr_addr == MIP)       ? csr_register[7]
+    reg [31:0] csr_register[7:0];
+    assign csr_r_data = (csr_addr == MSTATUS)   ? csr_register[3'd0]
+                      : (csr_addr == MIE)       ? csr_register[3'd1]
+                      : (csr_addr == MTVEC)     ? csr_register[3'd2]
+                      : (csr_addr == MSCRATCH)  ? csr_register[3'd3]
+                      : (csr_addr == MEPC)      ? csr_register[3'd4]
+                      : (csr_addr == MCAUSE)    ? csr_register[3'd5]
+                      : (csr_addr == MTVAL)     ? csr_register[3'd6]
+                      : (csr_addr == MIP)       ? csr_register[3'd7]
                       : 12'hxxx;
 
     always @(posedge clock) begin

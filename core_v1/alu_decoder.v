@@ -34,7 +34,7 @@ parameter ALU_SRA = 4'b0111;
 parameter ALU_OR = 4'b1000;
 parameter ALU_AND = 4'b1001;
 
-parameter BEQ = 3'b001;
+parameter BEQ = 3'b000;
 parameter BNE = 3'b001;
 parameter BLT = 3'b100;
 parameter BGE = 3'b101;
@@ -75,7 +75,7 @@ parameter ALU_JALR = 4'b0000;
                         SRL_SRA : begin
                             case(funct7)
                                 7'b0000000: alu_decode = ALU_SRL;
-                                7'b0100000: alu_deocde = ALU_SRA;
+                                7'b0100000: alu_decode = ALU_SRA;
                             endcase
                         end
                     endcase
@@ -95,12 +95,11 @@ parameter ALU_JALR = 4'b0000;
                         SRL_SRA: begin
                             case(funct7)
                                 7'b0000000: alu_decode = ALU_SRL;
-                                7'b0100000: alu_deocde = ALU_SRA;
+                                7'b0100000: alu_decode = ALU_SRA;
                             endcase
                         end
                         OR: alu_decode = ALU_OR;
                         AND: alu_decode = ALU_AND;
-                        end
                     endcase
                 end
                 B_INSTR: begin
@@ -109,14 +108,14 @@ parameter ALU_JALR = 4'b0000;
                         BNE: alu_decode = ALU_BNE;
                         BLT: alu_decode = ALU_BLT;
                         BGE: alu_decode = ALU_BGE;
-                        BLTU: alu_deocde = ALU_BLTU;
-                        BGEU: alu_deocde = ALU_BGEU;
+                        BLTU: alu_decode = ALU_BLTU;
+                        BGEU: alu_decode = ALU_BGEU;
                     endcase
                 end
                 LUI_INSTR: alu_decode = ALU_LUI; 
-                AUIPC_INSTR: alu_deocde = ALU_AUIPC;
+                AUIPC_INSTR: alu_decode = ALU_AUIPC;
                 JAL_INSTR: alu_decode = ALU_JAL;
-                JALR_INSTR: alu_deocde = ALU_JALR;
+                JALR_INSTR: alu_decode = ALU_JALR;
             endcase
         end
     endfunction
