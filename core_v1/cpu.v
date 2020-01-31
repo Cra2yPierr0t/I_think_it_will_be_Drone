@@ -1,6 +1,6 @@
 //一旦cpu内にpcとdmem, instr_memを置いて, rv32i実装終わったら外に出す
 module cpu(
-    output [31:0] pc,
+    output reg [31:0] pc = 0,
     input [31:0] instr,
     output [31:0] dmem_rw_addr,
     output [31:0] rs2_data,
@@ -10,7 +10,7 @@ module cpu(
     input clock
 );
 
-    reg [31:0] pc = 0;
+    //reg [31:0] pc = 0;
 
     wire [31:0] load_addr;
     wire [31:0] store_addr;

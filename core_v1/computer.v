@@ -12,8 +12,8 @@ module computer(input clock,
     wire [31:0] _dmem_r_data;
     wire [31:0] rs2_data;
 
-    wire led_begin_flag;
-    wire [31:0] led_in_data;
+    reg led_begin_flag;
+    reg [31:0] led_in_data;
     wire [31:0] led_state_reg;
 
     instr_mem instr_mem(.addr(pc),
