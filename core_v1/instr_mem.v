@@ -6,7 +6,6 @@ module instr_mem(
 
     assign instr = {mem[addr + 3], mem[addr + 2], mem[addr + 1], mem[addr]};
 
-    initial begin
     /*
         {mem[3], mem[2], mem[1], mem[0]} = 32'h00000293;
         {mem[7], mem[6], mem[5], mem[4]} = 32'h00000313;
@@ -30,7 +29,7 @@ module instr_mem(
     //addi t4, t4, -1
     //bne t4, zero, -0x18
     //jal t5, -0x24
-    
+    always @(*) begin
         {mem[3], mem[2], mem[1], mem[0]} = 32'b000000000001_00000_000_11100_0010011;
         {mem[7], mem[6], mem[5], mem[4]} = 32'b000000001001_00000_000_11101_0010011;
         {mem[11], mem[10], mem[9], mem[8]} = 32'b000011111111_00000_000_00110_0010011;;

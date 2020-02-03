@@ -1,4 +1,4 @@
-module computer(input clock,
+module computer(input clock50M,
                 output [7:0] led_out_data);
 
     wire [31:0] pc;
@@ -15,6 +15,17 @@ module computer(input clock,
     reg led_begin_flag = 0;
     reg [31:0] led_in_data;
     wire [31:0] led_state_reg;
+	 
+	 reg clock = 0;
+	 reg [23:0] cnt = 24'h000000;
+    always @(posedge clock50M) begin
+        if(cnt == 24'h4c4b40) begin
+            cnt <= 24'h000000;
+            clock <= ~clock;
+        end else begin
+            cnt <= cnt + 1;
+        end
+    end
 
     instr_mem instr_mem(.addr(pc),
                         .instr(instr));
