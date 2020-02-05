@@ -1,4 +1,4 @@
-module computer(input clock50M,
+module computer_max1000(input clock12M,
                 output [7:0] led_out_data);
 
     wire [31:0] pc;
@@ -17,17 +17,29 @@ module computer(input clock50M,
     wire [31:0] led_state_reg;
 	 
 	 reg clock = 0;
+	 reg clock_rom = 0;
 	 reg [23:0] cnt = 24'h000000;
-    always @(posedge clock50M) begin
-        if(cnt == 24'h4c4b40) begin
+	 reg [23:0] cnt_rom = 24'h000000;
+    always @(posedge clock12M) begin
+        if(cnt == 24'h0004b0) begin
             cnt <= 24'h000000;
             clock <= ~clock;
         end else begin
             cnt <= cnt + 1;
         end
     end
+	 
+	 always @(posedge clock12M) begin
+	     if(cnt_rom == 24'h000258) begin
+		      cnt_rom <= 24'h000000;
+				clock_rom = ~clock_rom;
+        end else begin
+		      cnt_rom <= cnt_rom + 1;
+		  end
+	 end
 
     instr_mem instr_mem(.addr(pc),
+	                     .clock(clock_rom),
                         .instr(instr));
 
     cpu cpu(.pc(pc),
@@ -57,7 +69,7 @@ module computer(input clock50M,
     end
 
     assign dmem_r_data = (dmem_rw_addr == 32'h0000_03f8) ? led_state_reg : _dmem_r_data;
-
+	 
     LED8 LED8(.in_data(led_in_data),
               .begin_flag(led_begin_flag),
               .state_reg(led_state_reg),

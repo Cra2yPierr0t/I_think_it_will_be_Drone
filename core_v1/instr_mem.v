@@ -1,45 +1,13 @@
 module instr_mem(
     input [31:0] addr,
+	 input clock,
     output [31:0] instr);
 
-    reg [7:0] mem[0:255];
-
-    assign instr = {mem[addr + 3], mem[addr + 2], mem[addr + 1], mem[addr]};
-
-    /*
-        {mem[3], mem[2], mem[1], mem[0]} = 32'h00000293;
-        {mem[7], mem[6], mem[5], mem[4]} = 32'h00000313;
-        {mem[11], mem[10], mem[9], mem[8]} = 32'h00a00393;
-        {mem[15], mem[14], mem[13], mem[12]} = 32'h00128293;
-        {mem[19], mem[18], mem[17], mem[16]} = 32'h00530333;
-        {mem[23], mem[22], mem[21], mem[20]} = 32'h00728463;
-        {mem[27], mem[26], mem[25], mem[24]} = 32'hff1ff06f;
-        {mem[31], mem[30], mem[29], mem[28]} = 32'h00030533;
-        {mem[35], mem[34], mem[33], mem[32]} = 32'h00008067;
-    */
-
-    //addi t3, zero, 1
-    //addi t4, zero, 9
-    //addi t1, zero, 0xff
-    //sw t1, 0x3fc(zero)
-    //lw t2, 0x3f8(zero)
-    //and t2, t2, t3
-    //bne t2, zero, -0x8
-    //srl t1, t1, t3
-    //addi t4, t4, -1
-    //bne t4, zero, -0x18
-    //jal t5, -0x24
-    always @(*) begin
-        {mem[3], mem[2], mem[1], mem[0]} = 32'b000000000001_00000_000_11100_0010011;
-        {mem[7], mem[6], mem[5], mem[4]} = 32'b000000001001_00000_000_11101_0010011;
-        {mem[11], mem[10], mem[9], mem[8]} = 32'b000011111111_00000_000_00110_0010011;;
-        {mem[15], mem[14], mem[13], mem[12]} = 32'b0011111_00110_00000_010_11100_0100011;
-        {mem[19], mem[18], mem[17], mem[16]} = 32'b001111111000_00000_010_00111_0000011;
-        {mem[23], mem[22], mem[21], mem[20]} = 32'b0000000_00111_11100_111_00111_0110011;
-        {mem[27], mem[26], mem[25], mem[24]} = 32'b1111111_00000_00111_001_11001_1100011;
-        {mem[31], mem[30], mem[29], mem[28]} = 32'b0000000_11100_00110_101_00110_0110011;
-        {mem[35], mem[34], mem[33], mem[32]} = 32'b111111111111_11101_000_11101_0010011;
-        {mem[39], mem[38], mem[37], mem[36]} = 32'b1111111_11101_00000_001_01001_1100011;
-        {mem[43], mem[42], mem[41], mem[40]} = 32'b1_1111101110_1_1111_1111_1111_0110_1111;
-    end
+	 wire [31:0] q;
+	 
+	 assign instr = q;
+	 
+    instruction_memory rom(.address(addr >> 2),
+	                        .clock(clock),
+									.q(q));
 endmodule
