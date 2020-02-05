@@ -35,7 +35,7 @@ module cpu(
     wire [31:0] alu_out;
     wire [31:0] alu_data_y;
     wire [31:0] alu_data_x;
-    wire reg_imm_sel;   //0:reg 1:imm
+    wire rs2_imm_sel;   //0:rs2 1:imm
     wire [31:0] imm_I_data;
 
     wire [11:0] imm_B;
@@ -43,7 +43,7 @@ module cpu(
 
     wire [19:0] imm_U;
     wire [31:0] imm_U_data;
-    wire [1:0] imm_sel;   //00:U 01:I 10:J
+    wire [1:0] imm_sel;   //00:U 01:I 10:J 11:zimm
     wire rs1_pc_sel;    //0:rs1 1:pc
 
     wire [19:0] imm_J;
@@ -76,10 +76,11 @@ module cpu(
                                     .dmem_w_en(dmem_w_en),
                                     .store_load_sel(store_load_sel),
                                     .reg_w_sel(reg_w_sel),
-                                    .reg_imm_sel(reg_imm_sel),
+                                    .rs2_imm_sel(rs2_imm_sel),
                                     .imm_sel(imm_sel),
                                     .rs1_pc_sel(rs1_pc_sel),
-                                    .jump_en(jump_en));
+                                    .jump_en(jump_en),
+                                    .csr_w_en(csr_w_en));
 
     assign imm_I_data = (funct3 == 3'b001 || funct3 == 3'b101) ? {27'h0, imm_I[4:0]}
                                                            : imm_I[11] ? {20'hfffff, imm_I} 
@@ -89,10 +90,12 @@ module cpu(
 
     assign imm_data = (imm_sel == 2'b01) ? imm_I_data 
                     : (imm_sel == 2'b00) ? imm_U_data
-                    : (imm_sel == 2'b10) ? imm_J_data : 32'h00000000;
+                    : (imm_sel == 2'b10) ? imm_J_data 
+                    : (imm_sel == 2'b11) ? {24'h000000, 3'b000, rs1_addr}
+                    : 32'h00000000;
 
     assign alu_data_x = rs1_pc_sel ? pc : rs1_data;
-    assign alu_data_y = reg_imm_sel ? imm_data : rs2_data; 
+    assign alu_data_y = rs2_imm_sel ? imm_data : rs2_data; 
 
     alu alu(.alu_ctrl(alu_ctrl),
             .data_x(alu_data_x),
@@ -101,7 +104,9 @@ module cpu(
     
     assign reg_w_data = (reg_w_sel == 2'b00) ? dmem_r_data
                       : (reg_w_sel == 2'b01) ? alu_out
-                      : (reg_w_sel == 2'b10) ? pc + 4 : 32'h00000000;
+                      : (reg_w_sel == 2'b10) ? pc + 4 
+                      : (reg_w_sel == 2'b11) ? csr_r_data
+                      : 32'h00000000;
 
     regfile regfile(.rd_addr(rd_addr),
                     .rs1_addr(rs1_addr),
@@ -111,6 +116,21 @@ module cpu(
                     .rs1_data(rs1_data),
                     .rs2_data(rs2_data),
                     .clock(clock));
+
+    csr_controller csr_controller(.funct3(funct3),
+                                  .csr_r_data(csr_r_data),
+                                  .zimm(imm_data),
+                                  .rs1_data(rs1_data),
+                                  .csr_w_data(csr_w_data));
+
+    wire [31:0] csr_w_data;
+    wire csr_w_en;
+    wire [31:0] csr_r_data;
+    csr_regfile csr_regfile(.csr_addr(imm_I),
+                            .csr_w_data(csr_w_data),
+                            .csr_w_en(csr_w_en),
+                            .csr_r_data(csr_r_data),
+                            .clock(clock));
 
     //オフセットの符号拡張とアドレス作成
     assign load_addr = rs1_data + {imm_I[11] ? 20'hfffff : 20'h00000, imm_I};

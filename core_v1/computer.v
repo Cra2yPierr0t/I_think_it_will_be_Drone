@@ -1,4 +1,4 @@
-module computer_max1000(input clock12M,
+module computer(input clock12M,
                 output [7:0] led_out_data);
 
     wire [31:0] pc;
