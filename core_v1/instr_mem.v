@@ -5,7 +5,7 @@ module instr_mem(
 
 	 wire [31:0] q;
 	 
-	 assign instr = q;
+	 assign instr = q[31:0];
 	 
     instruction_memory rom(.address(addr >> 2),
 	                        .clock(clock),

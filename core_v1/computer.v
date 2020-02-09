@@ -1,4 +1,5 @@
-module computer(input clock12M,
+module computer(input clock50M,
+                input button,
                 output [7:0] led_out_data);
 
     wire [31:0] pc;
@@ -15,13 +16,15 @@ module computer(input clock12M,
     reg led_begin_flag = 0;
     reg [31:0] led_in_data;
     wire [31:0] led_state_reg;
+
+    wire [31:0] button_out_data;
 	 
 	 reg clock = 0;
 	 reg clock_rom = 0;
 	 reg [23:0] cnt = 24'h000000;
 	 reg [23:0] cnt_rom = 24'h000000;
-    always @(posedge clock12M) begin
-        if(cnt == 24'h0004b0) begin
+    always @(posedge clock50M) begin
+        if(cnt == 24'h00001388) begin
             cnt <= 24'h000000;
             clock <= ~clock;
         end else begin
@@ -29,8 +32,8 @@ module computer(input clock12M,
         end
     end
 	 
-	 always @(posedge clock12M) begin
-	     if(cnt_rom == 24'h000258) begin
+	 always @(posedge clock50M) begin
+	     if(cnt_rom == 24'h000009c4) begin
 		      cnt_rom <= 24'h000000;
 				clock_rom = ~clock_rom;
         end else begin
@@ -41,7 +44,7 @@ module computer(input clock12M,
     instr_mem instr_mem(.addr(pc),
 	                     .clock(clock_rom),
                         .instr(instr));
-
+								
     cpu cpu(.pc(pc),
             .instr(instr),
             .dmem_rw_addr(dmem_rw_addr),
@@ -49,7 +52,9 @@ module computer(input clock12M,
             .dmem_w_en(dmem_w_en),
             .funct3(funct3),
             .dmem_r_data(dmem_r_data),
+            .int_req(int_req),
             .clock(clock));
+				
 
     data_mem data_mem(.rw_addr(dmem_rw_addr),
                       .w_data(rs2_data),
@@ -68,8 +73,16 @@ module computer(input clock12M,
         end
     end
 
-    assign dmem_r_data = (dmem_rw_addr == 32'h0000_03f8) ? led_state_reg : _dmem_r_data;
-	 
+    assign dmem_r_data = (dmem_rw_addr == 32'h0000_03f8) ? led_state_reg 
+                       : (dmem_rw_addr == 32'h0000_0400) ? button_out_data
+                       : _dmem_r_data;
+
+		 BUTTON BUTTON(.button(button),
+         			.clock(clock),
+                  .access_addr(dmem_rw_addr),
+                  .out_data(button_out_data),
+                  .int_req(int_req));
+						
     LED8 LED8(.in_data(led_in_data),
               .begin_flag(led_begin_flag),
               .state_reg(led_state_reg),

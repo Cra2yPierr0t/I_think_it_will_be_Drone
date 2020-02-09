@@ -1,12 +1,12 @@
-//一旦cpu内にpcとdmem, instr_memを置いて, rv32i実装終わったら外に出す
 module cpu(
-    output reg [31:0] pc = 0,
+    output reg [31:0] pc = 32'h00000000,
     input [31:0] instr,
     output [31:0] dmem_rw_addr,
     output [31:0] rs2_data,
     output dmem_w_en,
     output [2:0] funct3,
     input [31:0] dmem_r_data,
+    input int_req,
     input clock
 );
 
@@ -53,6 +53,12 @@ module cpu(
 
     wire jump_en;   // 0:nojump 1:jump enable
 
+	 wire [31:0] csr_w_data;
+    wire csr_w_en;
+    wire [31:0] csr_r_data;
+	 
+    wire ret;
+
     main_decoder main_dec(.instr(instr),
                           .opcode(opcode),
                           .rd(rd_addr), 
@@ -72,6 +78,7 @@ module cpu(
                         .alu_ctrl(alu_ctrl));
 
     main_controller main_controller(.opcode(opcode),
+                                    .funct3(funct3),
                                     .reg_w_en(reg_w_en),
                                     .dmem_w_en(dmem_w_en),
                                     .store_load_sel(store_load_sel),
@@ -80,7 +87,8 @@ module cpu(
                                     .imm_sel(imm_sel),
                                     .rs1_pc_sel(rs1_pc_sel),
                                     .jump_en(jump_en),
-                                    .csr_w_en(csr_w_en));
+                                    .csr_w_en(csr_w_en),
+                                    .ret(ret));
 
     assign imm_I_data = (funct3 == 3'b001 || funct3 == 3'b101) ? {27'h0, imm_I[4:0]}
                                                            : imm_I[11] ? {20'hfffff, imm_I} 
@@ -123,14 +131,30 @@ module cpu(
                                   .rs1_data(rs1_data),
                                   .csr_w_data(csr_w_data));
 
-    wire [31:0] csr_w_data;
-    wire csr_w_en;
-    wire [31:0] csr_r_data;
-    csr_regfile csr_regfile(.csr_addr(imm_I),
-                            .csr_w_data(csr_w_data),
-                            .csr_w_en(csr_w_en),
-                            .csr_r_data(csr_r_data),
-                            .clock(clock));
+
+    wire [31:0] csr_ro_data;
+    wire [11:0] csr_ro_addr;
+    wire [31:0] mtvec;
+    wire [31:0] mepc;
+    wire [31:0] mie;
+
+    csr_regfile_rw csr_regfile_rw(.csr_addr(imm_I),
+                                  .csr_w_data(csr_w_data),
+                                  .csr_w_en(csr_w_en),
+                                  .csr_r_data(csr_r_data),
+                                  .clock(clock),
+                                  .csr_ro_data(csr_ro_data),
+                                  .csr_ro_addr(csr_ro_addr));
+
+    csr_regfile_ro csr_regfile_ro(.csr_addr(csr_ro_addr),
+                                  .pc(pc),
+                                  .csr_r_data(csr_ro_data),
+                                  .mtvec(mtvec),
+                                  .mepc(mepc),
+                                  .mie(mie),
+                                  .int_req(int_req),
+                                  .clock(clock),
+                                  .ret(ret));
 
     //オフセットの符号拡張とアドレス作成
     assign load_addr = rs1_data + {imm_I[11] ? 20'hfffff : 20'h00000, imm_I};
@@ -144,9 +168,13 @@ module cpu(
                                         .branch_ctrl(branch_ctrl));
 
     always @(posedge clock) begin
-        if(branch_ctrl) begin
-            pc = pc + {imm_B[11] ? 19'b11111_11111_11111_1111 : 19'b00000_00000_00000_0000, imm_B, 1'b0};
-        end else if(jump_en) begin
+        if(int_req && mie[11]) begin
+            pc = mtvec;
+        end else if(ret) begin
+            pc = mepc;
+        end else if(branch_ctrl) begin
+            pc = pc + {imm_B[11] ? {16'hffff, 3'b111} : {16'h0000, 3'b000}, imm_B, 1'b0};
+		  end else if(jump_en) begin
             pc = {alu_out[31:1], 1'b0};
         end else begin
             pc = pc + 4;
