@@ -17,8 +17,8 @@ module main_controller(
     function [11:0] control(input [6:0] opcode, input [2:0] funct3);
         begin
             case(opcode)
-                7'b0000011: control = 12'b101_00_0_01_0000;  //store
-                7'b0100011: control = 12'b010_00_0_01_0000;  //load
+                7'b0000011: control = 12'b101_00_0_01_0000;  //load
+                7'b0100011: control = 12'b010_00_0_01_0000;  //store
                 7'b0110011: control = 12'b100_01_0_01_0000;  //reg-reg cal
                 7'b0010011: control = 12'b100_01_1_01_0000;  //imm-reg cal
                 7'b1100011: control = 12'b000_00_0_01_0000;  //branch
