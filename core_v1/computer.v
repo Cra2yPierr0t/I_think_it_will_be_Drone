@@ -77,12 +77,12 @@ module computer(input clock50M,
                        : (dmem_rw_addr == 32'h0000_0400) ? button_out_data
                        : _dmem_r_data;
 
-		 BUTTON BUTTON(.button(button),
-         			.clock(clock),
+    BUTTON BUTTON(.button(button),
+                  .clock(clock),
                   .access_addr(dmem_rw_addr),
                   .out_data(button_out_data),
                   .int_req(int_req));
-						
+
     LED8 LED8(.in_data(led_in_data),
               .begin_flag(led_begin_flag),
               .state_reg(led_state_reg),
