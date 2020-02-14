@@ -10,7 +10,7 @@ module cpu(
     input clock
 );
 
-    //reg [31:0] pc = 0;
+    wire [31:0] _pc;
 
     wire [31:0] load_addr;
     wire [31:0] store_addr;
@@ -58,6 +58,7 @@ module cpu(
     wire [31:0] csr_r_data;
 	 
     wire ret;
+    wire wfi;
 
     main_decoder main_dec(.instr(instr),
                           .opcode(opcode),
@@ -79,6 +80,7 @@ module cpu(
 
     main_controller main_controller(.opcode(opcode),
                                     .funct3(funct3),
+                                    .funct7(funct7),
                                     .reg_w_en(reg_w_en),
                                     .dmem_w_en(dmem_w_en),
                                     .store_load_sel(store_load_sel),
@@ -88,7 +90,8 @@ module cpu(
                                     .rs1_pc_sel(rs1_pc_sel),
                                     .jump_en(jump_en),
                                     .csr_w_en(csr_w_en),
-                                    .ret(ret));
+                                    .ret(ret),
+                                    .wfi(wfi));
 
     assign imm_I_data = (funct3 == 3'b001 || funct3 == 3'b101) ? {27'h0, imm_I[4:0]}
                                                            : imm_I[11] ? {20'hfffff, imm_I} 
@@ -138,23 +141,16 @@ module cpu(
     wire [31:0] mepc;
     wire [31:0] mie;
 
-    csr_regfile_rw csr_regfile_rw(.csr_addr(imm_I),
-                                  .csr_w_data(csr_w_data),
-                                  .csr_w_en(csr_w_en),
-                                  .csr_r_data(csr_r_data),
-                                  .clock(clock),
-                                  .csr_ro_data(csr_ro_data),
-                                  .csr_ro_addr(csr_ro_addr));
-
-    csr_regfile_ro csr_regfile_ro(.csr_addr(csr_ro_addr),
-                                  .pc(pc),
-                                  .csr_r_data(csr_ro_data),
-                                  .mtvec(mtvec),
-                                  .mepc(mepc),
-                                  .mie(mie),
-                                  .int_req(int_req),
-                                  .clock(clock),
-                                  .ret(ret));
+    csr_regfile csr_regfile(.csr_addr(imm_I),
+                            .csr_w_data(csr_w_data),
+                            .csr_w_en(csr_w_en),
+                            .pc(_pc),
+                            .csr_r_data(csr_r_data),
+                            .mtvec(mtvec),
+                            .mepc(mepc),
+                            .mie(mie),
+                            ,int_req(int_req),
+                            .clock(clock));
 
     //オフセットの符号拡張とアドレス作成
     assign load_addr = rs1_data + {imm_I[11] ? 20'hfffff : 20'h00000, imm_I};
@@ -167,9 +163,15 @@ module cpu(
                                         .alu_out(alu_out),
                                         .branch_ctrl(branch_ctrl));
 
+    assign _pc = (branch_ctrl) ? pc + {imm_B[11] ? {16'hffff, 3'b111} : {16'h0000, 3'b000}, imm_B, 1'b0}
+               : (jump_en) ? {alu_out[31:1], 1'b0}
+               : pc + 4;
+
     always @(posedge clock) begin
         if(int_req && mie[11]) begin
             pc = mtvec;
+        end else if(wfi) begin
+            pc = pc;
         end else if(ret) begin
             pc = mepc;
         end else if(branch_ctrl) begin
