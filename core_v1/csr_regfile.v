@@ -58,9 +58,9 @@ parameter MIP       = 12'h344;
         end
 
         if(mstatus[3] && mie[11] && int_req) begin
-            mtvec <= 32'h00000500;
+            mtvec <= 32'h000000f0;
         end else begin
-            mtvec <= 32'h00000500;
+            mtvec <= 32'h000000f0;
         end
 
         if(mstatus[3] && mie[11] && int_req) begin
