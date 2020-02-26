@@ -40,7 +40,9 @@ parameter MIP       = 12'h344;
             endcase
         end
 
-         if(mstatus[3] && mie[11] && int_req) begin
+        if(ret) begin
+            mstatus <= 32'h00000008;
+        end else if(mstatus[3] && mie[11] && int_req) begin
             mstatus <= 32'h00000000;
         end else begin
             mstatus <= mstatus;
