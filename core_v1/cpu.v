@@ -7,7 +7,8 @@ module cpu(
     output [2:0] funct3,
     input [31:0] dmem_r_data,
     input int_req,
-    input clock
+    input clock,
+    output reg_w_en
 );
 
     wire [31:0] _pc;
@@ -21,7 +22,6 @@ module cpu(
     wire [4:0] rs1_addr;
     wire [4:0] rs2_addr;
     wire [31:0] rs1_data;
-    wire reg_w_en;          //0:disable 1:enable
     wire [31:0] reg_w_data;
     wire [1:0] reg_w_sel;      //00:dmem 01:alu 10:pc+4
 
@@ -53,7 +53,7 @@ module cpu(
 
     wire jump_en;   // 0:nojump 1:jump enable
 
-	 wire [31:0] csr_w_data;
+    wire [31:0] csr_w_data;
     wire csr_w_en;
     wire [31:0] csr_r_data;
 	 
@@ -149,7 +149,8 @@ module cpu(
                             .mtvec(mtvec),
                             .mepc(mepc),
                             .mie(mie),
-                            ,int_req(int_req),
+                            .int_req(|int_req),
+                            .ret(ret),
                             .clock(clock));
 
     //オフセットの符号拡張とアドレス作成
@@ -176,7 +177,7 @@ module cpu(
             pc = mepc;
         end else if(branch_ctrl) begin
             pc = pc + {imm_B[11] ? {16'hffff, 3'b111} : {16'h0000, 3'b000}, imm_B, 1'b0};
-		  end else if(jump_en) begin
+		  end else if(jump_en) begin				
             pc = {alu_out[31:1], 1'b0};
         end else begin
             pc = pc + 4;

@@ -2,7 +2,7 @@ module computer(input clock50M,
                 input button,
                 input rx,
                 output tx,
-					 output [7:0] led_out_data);
+                output [7:0] led_out_data);
 
     wire [31:0] pc;
     wire [31:0] instr;
@@ -18,7 +18,7 @@ module computer(input clock50M,
     reg led_begin_flag = 0;
     reg [31:0] led_in_data;
     wire [31:0] led_state_reg;
-	 wire [7:0] _led_out_data;
+    wire [7:0] _led_out_data;
 
     wire [31:0] button_out_data;
 	 
@@ -34,10 +34,10 @@ module computer(input clock50M,
     reg tx_begin_flag = 0;
     wire tx_busy_flag;
     wire [31:0] tx_state_data;
-	 wire debug_line;
+    wire debug_line;
 
     always @(posedge clock50M) begin
-	     //if(cnt == 32'h017d7840) begin   
+	    // if(cnt == 32'h017d7840) begin   
 	         clock = ~clock;
 			//	cnt = 32'h00000000;
 		   //end else begin
@@ -55,7 +55,7 @@ module computer(input clock50M,
 	 end
 
     instr_mem instr_mem(.addr(pc),
-	                     .clock(clock50M),
+                        .clock(clock50M),
                         .instr(instr));
 								
     cpu cpu(.pc(pc),
@@ -67,15 +67,15 @@ module computer(input clock50M,
             .dmem_r_data(dmem_r_data),
             .int_req(int_req[0] || int_req[1]),
             .clock(clock),
-				.debug_line(debug_line));
-				
+            .reg_w_en(reg_w_en));
+			
 
     data_mem data_mem(.rw_addr(dmem_rw_addr),
                       .w_data(rs2_data),
                       .w_en(dmem_w_en),
                       .funct3(funct3),
                       .r_data(_dmem_r_data),
-                      .clock(clock));
+                      .clock(clock50M));
 
     always @(posedge clock) begin
         if(dmem_rw_addr == 32'h0000_03fc && dmem_w_en == 1'b1) begin
@@ -97,12 +97,13 @@ module computer(input clock50M,
         end
     end
 
+    assign led_out_data = pc[7:0];
     assign tx_state_data = {28'h0000000, 3'b000, tx_busy_flag};
-	 
+ 
     assign dmem_r_data = (dmem_rw_addr == 32'h0000_0408) ? tx_state_data//未対応
                        : (dmem_rw_addr == 32'h0000_040c) ? rx_data//未対応
                        : (dmem_rw_addr == 32'h0000_0400) ? button_out_data
-							  : (dmem_rw_addr == 32'h0000_03f8) ? led_state_reg 
+                       : (dmem_rw_addr == 32'h0000_03f8) ? led_state_reg 
                        : _dmem_r_data;
 
     UART UART(.clk(clock50M),
@@ -113,6 +114,7 @@ module computer(input clock50M,
               .tx_begin_flag(tx_begin_flag),
               .tx_busy_flag(tx_busy_flag),
               .access_addr(dmem_rw_addr),
+              .reg_w_en(reg_w_en),
               .int_req(int_req[1]));
 
     BUTTON BUTTON(.button(button),
@@ -124,6 +126,6 @@ module computer(input clock50M,
     LED8 LED8(.in_data(led_in_data),
               .begin_flag(led_begin_flag),
               .state_reg(led_state_reg),
-              .out_data(led_out_data),
+              .out_data(_led_out_data),
               .clock(clock));
 endmodule

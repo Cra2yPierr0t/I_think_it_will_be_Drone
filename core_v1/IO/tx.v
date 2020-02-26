@@ -1,5 +1,6 @@
-module tx(clk, begin_flag, data, tx, busy_flag);
+module tx(clk, tx_en, begin_flag, data, tx, busy_flag);
     input wire clk;
+    input wire tx_en;
     input wire begin_flag;
     input wire[7:0] data;
     output reg tx = 1'b1;
@@ -23,7 +24,7 @@ module tx(clk, begin_flag, data, tx, busy_flag);
                 tx <= 1'b1;
                 clk_count = 32'd0;
                 bit_count <= 3'd0;
-                state <= begin_flag ? 2'b01 : state;
+                state <= begin_flag & tx_en ? 2'b01 : state;
             end
             2'b01: begin
                 tx <= 1'b0;
@@ -46,7 +47,11 @@ module tx(clk, begin_flag, data, tx, busy_flag);
                 tx <= 1'b1;
                 clk_count <= clk_count + 32'd1;
                 case({update_flag, begin_flag})
-                    2'b11: state <= 2'b01;
+                    2'b11: begin
+                        state <= 2'b01;
+                        clk_count <= 32'd0;
+                        bit_count <= 3'd0;
+                    end
                     2'b10: state <= 2'b00;
                     default: state <= state;
                 endcase

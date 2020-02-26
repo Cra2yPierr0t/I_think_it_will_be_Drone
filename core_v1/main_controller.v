@@ -19,24 +19,24 @@ module main_controller(
     function [12:0] control(input [6:0] opcode, input [2:0] funct3, input [6:0] funct7);
         begin
             case(opcode)
-                7'b0000011: control = 12'b101_00_0_01_00000;  //store
-                7'b0100011: control = 12'b010_00_0_01_00000;  //load
-                7'b0110011: control = 12'b100_01_0_01_00000;  //reg-reg cal
-                7'b0010011: control = 12'b100_01_1_01_00000;  //imm-reg cal
-                7'b1100011: control = 12'b000_00_0_01_00000;  //branch
-                7'b0110111: control = 12'b100_01_1_00_00000;  //lui
-                7'b0010111: control = 12'b100_01_1_00_10000;  //auipc
-                7'b1101111: control = 12'b100_10_1_10_11000;  //jal
-                7'b1100111: control = 12'b100_10_1_01_11000;  //jalr
+                7'b0000011: control = 13'b101_00_0_01_00000;  //store
+                7'b0100011: control = 13'b010_00_0_01_00000;  //load
+                7'b0110011: control = 13'b100_01_0_01_00000;  //reg-reg cal
+                7'b0010011: control = 13'b100_01_1_01_00000;  //imm-reg cal
+                7'b1100011: control = 13'b000_00_0_01_00000;  //branch
+                7'b0110111: control = 13'b100_01_1_00_00000;  //lui
+                7'b0010111: control = 13'b100_01_1_00_10000;  //auipc
+                7'b1101111: control = 13'b100_10_1_10_11000;  //jal
+                7'b1100111: control = 13'b100_10_1_01_01000;  //jalr
                 7'b1110011: begin
                     case(funct3)
                         3'b000:  begin
                             case(funct7)
-                            7'b0011000: control = 12'b000_00_0_00_00010; //mret
-                            7'b0001000: control = 12'b000_00_0_00_00001;
+                            7'b0011000: control = 13'b000_00_0_00_00010; //mret
+                            7'b0001000: control = 13'b000_00_0_00_00001;
                             endcase
                         end
-                        default: control = 12'b100_11_0_11_00100;  //csr
+                        default: control = 13'b100_11_0_11_00100;  //csr
                     endcase
                 end  //csr
             endcase

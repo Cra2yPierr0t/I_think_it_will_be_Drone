@@ -8,6 +8,7 @@ module csr_regfile(
     output reg [31:0] mepc,
     output reg [31:0] mie,
     input int_req,
+    input ret,
     input clock);
 
 parameter MSTATUS   = 12'h300;
@@ -45,8 +46,8 @@ parameter MIP       = 12'h344;
             mstatus <= mstatus;
         end
         
-        if(csr_w_en == 1 && csr_addr == MIE) begin
-            mie <= csr_w_data;
+        if(ret) begin
+            mie <= 32'h00000800;
         end else if(mstatus[3] && mie[11] && int_req) begin   
             mie <= 32'h00000000;
         end else begin
@@ -58,9 +59,9 @@ parameter MIP       = 12'h344;
         end
 
         if(mstatus[3] && mie[11] && int_req) begin
-            mtvec <= 32'h000000f0;
+            mtvec <= 32'h00000500;
         end else begin
-            mtvec <= 32'h000000f0;
+            mtvec <= 32'h00000500;
         end
 
         if(mstatus[3] && mie[11] && int_req) begin

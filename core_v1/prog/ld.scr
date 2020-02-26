@@ -1,0 +1,11 @@
+ENTRY(main)
+SECTIONS{
+    .text : {
+        . = 0x0;
+        main.o(.text)
+        putc.o(.text)
+        getc.o(.text)
+        . = 0x500;
+        *(.vector)
+    }
+}

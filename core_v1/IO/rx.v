@@ -1,5 +1,6 @@
-module rx(clk, rx, data, end_flag);
+module rx(clk, rx_en, rx, data, end_flag);
     input wire clk;
+    input wire rx_en;
     input wire rx;
     output reg[7:0] data = 8'b00000000;
     output reg end_flag = 1'b0;
@@ -26,7 +27,7 @@ module rx(clk, rx, data, end_flag);
                 bit_count <= 3'd0;
                 end_flag <= 1'b0;
                 recent = {recent[2:0], rx};
-                state = (recent == 4'b0000) ? 2'b01 : state;
+                state = (recent == 4'b0000) & rx_en ? 2'b01 : state;
             end
             2'b01: begin
                 clk_count <= clk_count + 32'd1;
@@ -47,9 +48,11 @@ module rx(clk, rx, data, end_flag);
                 end
             end
             2'b10: begin
-                end_flag <= 1'b1;
                 clk_count <= clk_count + 32'd1;
-                state <= update_flag ? 2'b00 : state;
+                if(update_flag) begin
+                    state <= 2'b00;
+                    end_flag <= 1'b1;
+                end
             end
         endcase
     end
