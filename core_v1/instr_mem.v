@@ -3,16 +3,10 @@ module instr_mem(
     input clock,
     output [31:0] instr);
 
-    reg [31:0] mem [0:2048];
-
-    reg [31:0] _addr;
-    
-    always @(posedge clock) begin
-        _addr <= addr;
-    end
-
-    assign instr = mem[addr >> 2];
-
+    instruction_memory instruction_memory(.address(addr >> 2),
+                                          .clock(clock),
+                                          .q(instr));
+/*
     initial begin
 //main
      	mem[0] = 32'h04100513;    //  	li	a0,65
@@ -46,4 +40,5 @@ module instr_mem(
         mem[324] = 32'h0e602e23;  //    sw  t1,252(zero) # 0xfc
         mem[325] = 32'h30200073;  //    mret
     end
+*/
 endmodule

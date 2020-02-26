@@ -1,0 +1,199 @@
+-- Copyright (C) 2019  Intel Corporation. All rights reserved.
+-- Your use of Intel Corporation's design tools, logic functions 
+-- and other software and tools, and any partner logic 
+-- functions, and any output files from any of the foregoing 
+-- (including device programming or simulation files), and any 
+-- associated documentation or information are expressly subject 
+-- to the terms and conditions of the Intel Program License 
+-- Subscription Agreement, the Intel Quartus Prime License Agreement,
+-- the Intel FPGA IP License Agreement, or other applicable license
+-- agreement, including, without limitation, that your use is for
+-- the sole purpose of programming logic devices manufactured by
+-- Intel and sold by Intel or its authorized distributors.  Please
+-- refer to the applicable agreement for further details, at
+-- https://fpgasoftware.intel.com/eula.
+
+-- Quartus Prime generated Memory Initialization File (.mif)
+
+WIDTH=32;
+DEPTH=512;
+
+ADDRESS_RADIX=HEX;
+DATA_RADIX=HEX;
+
+CONTENT BEGIN
+-- main
+   0:	04400513;    --   	li	a0,68
+   1:	248000ef;    --   	jal	ra,24c <putc>
+   2:	06500513;    --   	li	a0,101
+   3:	240000ef;    --   	jal	ra,24c <putc>
+   4:	07400513;    --   	li	a0,116
+   5:	238000ef;    --   	jal	ra,24c <putc>
+   6:	06100513;    --   	li	a0,97
+   7:	230000ef;    --   	jal	ra,24c <putc>
+   8:	07200513;    --   	li	a0,114
+   9:	228000ef;    --   	jal	ra,24c <putc>
+   A:	06100513;    --   	li	a0,97
+   B:	220000ef;    --   	jal	ra,24c <putc>
+   C:	06d00513;    --   	li	a0,109
+   D:	218000ef;    --   	jal	ra,24c <putc>
+   E:	06500513;    --   	li	a0,101
+   F:	210000ef;    --   	jal	ra,24c <putc>
+  10:	02000513;    --   	li	a0,32
+  11:	208000ef;    --   	jal	ra,24c <putc>
+  12:	04f00513;    --   	li	a0,79
+  13:	200000ef;    --   	jal	ra,24c <putc>
+  14:	05300513;    --   	li	a0,83
+  15:	1f8000ef;    --   	jal	ra,24c <putc>
+  16:	00d00513;    --   	li	a0,13
+  17:	1f0000ef;    --   	jal	ra,24c <putc>
+  18:	00a00513;    --   	li	a0,10
+  19:	1e8000ef;    --   	jal	ra,24c <putc>
+-- Term
+  1A:	07000513;    --   	li	a0,112
+  1B:	1e0000ef;    --   	jal	ra,24c <putc>
+  1C:	06900513;    --   	li	a0,105
+  1D:	1d8000ef;    --   	jal	ra,24c <putc>
+  1E:	06500513;    --   	li	a0,101
+  1F:	1d0000ef;    --   	jal	ra,24c <putc>
+  20:	07200513;    --   	li	a0,114
+  21:	1c8000ef;    --   	jal	ra,24c <putc>
+  22:	07200513;    --   	li	a0,114
+  23:	1c0000ef;    --   	jal	ra,24c <putc>
+  24:	03000513;    --   	li	a0,48
+  25:	1b8000ef;    --   	jal	ra,24c <putc>
+  26:	07400513;    --   	li	a0,116
+  27:	1b0000ef;    --   	jal	ra,24c <putc>
+  28:	04000513;    --   	li	a0,64
+  29:	1a8000ef;    --   	jal	ra,24c <putc>
+  2A:	04d00513;    --   	li	a0,77
+  2B:	1a0000ef;    --   	jal	ra,24c <putc>
+  2C:	06100513;    --   	li	a0,97
+  2D:	198000ef;    --   	jal	ra,24c <putc>
+  2E:	06700513;    --   	li	a0,103
+  2F:	190000ef;    --   	jal	ra,24c <putc>
+  30:	06900513;    --   	li	a0,105
+  31:	188000ef;    --   	jal	ra,24c <putc>
+  32:	06300513;    --   	li	a0,99
+  33:	180000ef;    --   	jal	ra,24c <putc>
+  34:	06100513;    --   	li	a0,97
+  35:	178000ef;    --   	jal	ra,24c <putc>
+  36:	06c00513;    --   	li	a0,108
+  37:	170000ef;    --   	jal	ra,24c <putc>
+  38:	02d00513;    --   	li	a0,45
+  39:	168000ef;    --   	jal	ra,24c <putc>
+  3A:	04600513;    --   	li	a0,70
+  3B:	160000ef;    --   	jal	ra,24c <putc>
+  3C:	05000513;    --   	li	a0,80
+  3D:	158000ef;    --   	jal	ra,24c <putc>
+  3E:	04700513;    --   	li	a0,71
+  3F:	150000ef;    --   	jal	ra,24c <putc>
+  40:	04100513;    --   	li	a0,65
+  41:	148000ef;    --   	jal	ra,24c <putc>
+  42:	02000513;    --   	li	a0,32
+  43:	140000ef;    --   	jal	ra,24c <putc>
+  44:	02400513;    --   	li	a0,36
+  45:	138000ef;    --   	jal	ra,24c <putc>
+  46:	02000513;    --   	li	a0,32
+  47:	130000ef;    --   	jal	ra,24c <putc>
+  48:	140000ef;    --   	jal	ra,260 <getc>
+  49:	04100493;    --   	li	s1,65
+  4A:	05a00913;    --   	li	s2,90
+  4B:	00950663;    --   	beq	a0,s1,138 <AIEEEE>
+  4C:	04950e63;    --   	beq	a0,s1,18c <ZAPZAP>
+  4D:	0ac0006f;    --   	j	1e0 <OTHER>
+-- AIEEE
+  4E:	00d00513;    --   	li	a0,13
+  4F:	110000ef;    --   	jal	ra,24c <putc>
+  50:	00a00513;    --   	li	a0,10
+  51:	108000ef;    --   	jal	ra,24c <putc>
+  52:	04100513;    --   	li	a0,65
+  53:	100000ef;    --   	jal	ra,24c <putc>
+  54:	04900513;    --   	li	a0,73
+  55:	0f8000ef;    --   	jal	ra,24c <putc>
+  56:	04500513;    --   	li	a0,69
+  57:	0f0000ef;    --   	jal	ra,24c <putc>
+  58:	04500513;    --   	li	a0,69
+  59:	0e8000ef;    --   	jal	ra,24c <putc>
+  5A:	04500513;    --   	li	a0,69
+  5B:	0e0000ef;    --   	jal	ra,24c <putc>
+  5C:	04500513;    --   	li	a0,69
+  5D:	0d8000ef;    --   	jal	ra,24c <putc>
+  5E:	00d00513;    --   	li	a0,13
+  5F:	0d0000ef;    --   	jal	ra,24c <putc>
+  60:	00a00513;    --   	li	a0,10
+  61:	0c8000ef;    --   	jal	ra,24c <putc>
+  62:	ee1ff06f;    --   	j	68 <Term>
+-- ZAPZAP
+  63:	00d00513;    --   	li	a0,13
+  64:	0bc000ef;    --   	jal	ra,24c <putc>
+  65:	00a00513;    --   	li	a0,10
+  66:	0b4000ef;    --   	jal	ra,24c <putc>
+  67:	05a00513;    --   	li	a0,90
+  68:	0ac000ef;    --   	jal	ra,24c <putc>
+  69:	04100513;    --   	li	a0,65
+  6A:	0a4000ef;    --   	jal	ra,24c <putc>
+  6B:	05000513;    --   	li	a0,80
+  6C:	09c000ef;    --   	jal	ra,24c <putc>
+  6D:	05a00513;    --   	li	a0,90
+  6E:	094000ef;    --   	jal	ra,24c <putc>
+  6F:	04100513;    --   	li	a0,65
+  70:	08c000ef;    --   	jal	ra,24c <putc>
+  71:	05000513;    --   	li	a0,80
+  72:	084000ef;    --   	jal	ra,24c <putc>
+  73:	00d00513;    --   	li	a0,13
+  74:	07c000ef;    --   	jal	ra,24c <putc>
+  75:	00a00513;    --   	li	a0,10
+  76:	074000ef;    --   	jal	ra,24c <putc>
+  77:	e8dff06f;    --   	j	68 <Term>
+-- OTHER
+  78:	00d00513;    --   	li	a0,13
+  79:	068000ef;    --   	jal	ra,24c <putc>
+  7A:	00a00513;    --   	li	a0,10
+  7B:	060000ef;    --   	jal	ra,24c <putc>
+  7C:	06e00513;    --   	li	a0,110
+  7D:	058000ef;    --   	jal	ra,24c <putc>
+  7E:	06f00513;    --   	li	a0,111
+  7F:	050000ef;    --   	jal	ra,24c <putc>
+  80:	07400513;    --   	li	a0,116
+  81:	048000ef;    --   	jal	ra,24c <putc>
+  82:	02000513;    --   	li	a0,32
+  83:	040000ef;    --   	jal	ra,24c <putc>
+  84:	06600513;    --   	li	a0,102
+  85:	038000ef;    --   	jal	ra,24c <putc>
+  86:	06f00513;    --   	li	a0,111
+  87:	030000ef;    --   	jal	ra,24c <putc>
+  88:	07500513;    --   	li	a0,117
+  89:	028000ef;    --   	jal	ra,24c <putc>
+  8A:	06e00513;    --   	li	a0,110
+  8B:	020000ef;    --   	jal	ra,24c <putc>
+  8C:	06400513;    --   	li	a0,100
+  8D:	018000ef;    --   	jal	ra,24c <putc>
+  8E:	00a00513;    --   	li	a0,10
+  8F:	010000ef;    --   	jal	ra,24c <putc>
+  90:	00d00513;    --   	li	a0,13
+  91:	008000ef;    --   	jal	ra,24c <putc>
+  92:	e21ff06f;    --   	j	68 <Term>
+-- putc
+  93:	00100313;    --   	li	t1,1
+  94:	40802383;    --   	lw	t2,1032(zero) # 408 <getc+0x1a8>
+  95:	fe730ee3;    --   	beq	t1,t2,250 <putc+0x4>
+  96:	40a02223;    --   	sw	a0,1028(zero) # 404 <getc+0x1a4>
+  97:	00008067;    --   	ret
+-- getc
+  98:	0fc02283;    --   	lw	t0,252(zero) # fc <Term+0x94>
+  99:	fe028ee3;    --   	beqz	t0,260 <getc>
+  9A:	ffc28293;    --   	addi	t0,t0,-4
+  9B:	1002a503;    --   	lw	a0,256(t0)
+  9C:	0e502e23;    --   	sw	t0,252(zero) # fc <Term+0x94>
+  9D:	00008067;    --   	ret
+-- vector
+ 140:	40c02283;    --   	lw	t0,1036(zero) # 40c <getc+0x1ac>
+ 141:	0fc02303;    --   	lw	t1,252(zero) # fc <Term+0x94>
+ 142:	10532023;    --   	sw	t0,256(t1)
+ 143:	00430313;    --   	addi	t1,t1,4
+ 144:	0e602e23;    --   	sw	t1,252(zero) # fc <Term+0x94>
+ 145:	30200073;    --   	mret
+    [9E..13F]   :   00000000;
+	[146..1FF]  :   00000000;
+END;
