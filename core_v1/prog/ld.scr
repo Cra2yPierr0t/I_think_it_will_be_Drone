@@ -6,6 +6,6 @@ SECTIONS{
         putc.o(.text)
         getc.o(.text)
         . = 0x500;
-        *(.vector)
+        interrupt_handler.o(.vector)
     }
 }

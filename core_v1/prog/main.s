@@ -1,6 +1,7 @@
 .file "main.s"
 .global main
 main:
+    nop
     addi a0, zero, 'D'
     call putc
     addi a0, zero, 'e'
@@ -58,8 +59,6 @@ Term:
     call putc
     addi a0, zero, 'l'
     call putc
-    addi a0, zero, '-'
-    call putc
     addi a0, zero, 'F'
     call putc
     addi a0, zero, 'P'
@@ -68,17 +67,16 @@ Term:
     call putc
     addi a0, zero, 'A'
     call putc
-    addi a0, zero, ' '
-    call putc
     addi a0, zero, '$'
     call putc
     addi a0, zero, ' '
     call putc
     call getc
+    call putc
     addi s1, zero, 'A'
     addi s2, zero, 'Z'
     beq a0, s1, AIEEEE
-    beq a0, s1, ZAPZAP
+    beq a0, s2, ZAPZAP
     jal zero, OTHER
 AIEEEE:
     addi a0, zero, 0x0D
@@ -147,8 +145,8 @@ OTHER:
     call putc
     addi a0, zero, 'd'
     call putc
-    addi a0, zero, 0x0A
-    call putc
     addi a0, zero, 0x0D
+    call putc
+    addi a0, zero, 0x0A
     call putc
     jal zero, Term
