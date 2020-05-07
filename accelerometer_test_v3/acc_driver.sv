@@ -85,19 +85,48 @@ module acc_driver(
             end
             SCL_buf = clk400K;
         end else if(state == START_R) begin
-            if(/*SLCがHighの時にSDAを下げる*/) begin
-                SDA_buf = 0;
-            end else begin
+            //Sr: SLCがHighの時にSDAを下げる
+            if(general_cnt < 12) begin
+                SCL_buf = 0;
                 SDA_buf = 1;
+                general_cnt = general_cnt + 1;
+            end else if((12 <= general_cnt) && (general_cnt < 24)) begin
+                SCL_buf = 1;
+                SDA_buf = 1;
+                general_cnt = general_cnt + 1;
+            end else if((24 <= general_cnt) && (genenral_cnt < 35)) begin
+                SCL_buf = 1;
+                SDA_buf = 0;
+                general_cnt = general_cnt + 1;
+            end else begin  //general_cnt == 35
+                SCL_buf = 1;
+                SDA_buf = 0;
+                general_cnt = 0;
+                state = SLAVE_ADDR_R;
             end
-            SCL_buf = 1;
         end else if(state == SLAVE_ADDR_R) begin
-            SDA_buf = data[]    //MBS先頭にデータ送信 R
+            //データを送信する為の、非常に陳腐で冗長で複雑なロジック↓
+            if((clk400K_cnt == 0) && (clk400K == 0) && (data_index != 8)) begin
+                SDA_buf = 0;
+                general_cnt = general_cnt + 1;
+            end else if((general_cnt == 7) && (data_index != 8)) begin
+                SDA_buf = data[data_index];   //MBS先頭にデータ送信 R
+                data_intdex = data_index + 1;
+                general_cnt = 0;
+            end else if((general_cnt == 7) && (data_index == 8)) begin
+                data_index = 0;
+                general_cnt = 0;
+                state = WAIT_ACK_2;
+            end
             SCL_buf = clk400K;
-            //送信後、遷移
         end else if(state == WAIT_ACK_2) begin
-            if() begin
-                //ACKを感知後、遷移 SCLがHighかつSDAが0
+            if(SDA == 0) begin
+                general_cnt = general_cnt + 1;
+            end else if(general_cnt != 0) begin
+                general_cnt = general_cnt + 1;
+            end else if(general_cnt == 28) begin
+                general_cnt = 0;
+                state = GET_DATA;
             end
             SCL_buf = clk400K;
         end else if(state == GET_DATA) begin
