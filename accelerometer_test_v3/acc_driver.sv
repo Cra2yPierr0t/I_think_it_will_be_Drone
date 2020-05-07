@@ -6,7 +6,7 @@ module acc_driver(
 
     reg clk400K = 0;
     reg clk800K = 0;
-    reg [5:0] clk_cnt = 6'b000000;
+    reg [5:0] clk400K_cnt = 6'b000000;
 
     reg [3:0] state = 0;
     
@@ -23,30 +23,65 @@ module acc_driver(
     reg SCL_buf = 1;
     reg SDA_buf = 1;
 
+    reg [5:0] data_index = 0;
+
     always_ff @(posedge clk12M) begin
-        if(clk_cnt == 6'd14) begin
+        if(clk400K_cnt == 6'd14) begin
             clk400K = ~clk400K;
-            clk_cnt = 6'd0;
+            clk400K_cnt = 6'd0;
         end else begin
-            clk_cnt = clk_cnt + 1;
+            clk400K_cnt = clk400K_cnt + 1;
         end
     end
+
+    reg [31:0] general_cnt = 32'h0000_0000;
 
     always_ff @(posedge clk12M) begin
         if(state == BUSY) begin
             SDA_buf = 1;
             SCL_buf = 1;
+            if(general_cnt == 300 - 1) begin
+                state = START
+                general_cnt = 0;
+            end else begin
+                genenral_cnt = general_cnt + 1;
+            end
         end else if(state == START) begin
             SDA_buf = 0;    //START送信 SCLがHighでSDAをlowに
-            SCL_buf = 1;
-            //数クロック後に遷移
+            if(cnt < 12) begin  //1.0μs待機
+                general_cnt = general_cnt + 1;
+                SCL_buf = 1;
+            if(cnt == 100) begin
+                general_cnt = 0;
+                state = SLAVE_ADDR_W;
+                SCL_buf = 0;
+            end else begin
+                general_cnt = general_cnt + 1;
+                SCL_buf = 0;
+            end
         end else if(state == SLAVE_ADDR_W) begin
-            SDA_buf = data[];   //MBS先頭にデータ送信 W
+            //データを送信する為の、非常に陳腐で冗長で複雑なロジック↓
+            if((clk400K_cnt == 0) && (clk400K == 0) && (data_index != 8)) begin
+                SDA_buf = 0;
+                general_cnt = general_cnt + 1;
+            end else if((general_cnt == 7) && (data_index != 8)) begin
+                SDA_buf = data[data_index];   //MBS先頭にデータ送信 W
+                data_intdex = data_index + 1;
+                general_cnt = 0;
+            end else if((general_cnt == 7) && (data_index == 8)) begin
+                data_index = 0;
+                general_cnt = 0;
+                state = WAIT_ACK_1;
+            end
             SCL_buf = clk400K;
-            //送信後、遷移
         end else if(state == WAIT_ACK) begin
             if(SDA == 0) begin
-                //ACKを感知後、遷移 SCLがHighかつSDAが0
+                general_cnt = general_cnt + 1;
+            end else if(general_cnt != 0) begin
+                general_cnt = general_cnt + 1;
+            end else if(general_cnt == 28) begin
+                general_cnt = 0;
+                state = START_R;
             end
             SCL_buf = clk400K;
         end else if(state == START_R) begin
