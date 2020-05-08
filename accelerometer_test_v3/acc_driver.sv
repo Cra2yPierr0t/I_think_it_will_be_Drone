@@ -27,7 +27,7 @@ module acc_driver(
     reg [5:0] data_index = 0;
 
     reg [7:0] send_data = 8'h33;
-    reg [7:0] received_data = 8'h33;
+    reg [7:0] received_data = 8'hff;
 
     always_ff @(posedge clk12M) begin
         if(clk400K_cnt == 6'd14) begin
@@ -109,7 +109,7 @@ module acc_driver(
                 SCL_buf = 1;
                 SDA_buf = 0;
                 general_cnt = general_cnt + 1;
-            end else if((44 <= general_cnt) && (general_cnt < 50)) begin
+            end else if((44 <= general_cnt) && (general_cnt < 59)) begin
                 SCL_buf = 0;
                 SDA_buf = 0;
                 general_cnt = general_cnt + 1;
@@ -135,6 +135,22 @@ module acc_driver(
             end
             SCL_buf = clk400K;
         end else if(state == WAIT_ACK_2) begin
+            if(general_cnt == 29) begin
+                state = ACK_flag ? GET_DATA : WAIT_ACK_2;
+                ACK_flag = 0;
+                general_cnt = 0;
+            end else if((0 <= general_cnt) && (general_cnt < 13)) begin
+                general_cnt = general_cnt + 1;
+            end else if((13 <= general_cnt) && (general_cnt < 20)) begin
+                general_cnt = general_cnt + 1;
+                if(SDA == 0) begin
+                    ACK_flag = 1;
+                end
+            end else if((20 <= general_cnt) && (general_cnt < 29)) begin
+                general_cnt = general_cnt + 1;
+            end
+            SCL_buf = clk400K;
+        /*
             if(SDA == 0) begin
                 general_cnt = general_cnt + 1;
             end else if(general_cnt != 0) begin
@@ -144,6 +160,7 @@ module acc_driver(
                 state = GET_DATA;
             end
             SCL_buf = clk400K;
+        */
         end else if(state == GET_DATA) begin
             //データを得る為のクソ冗長なロジック↓
             if(data_index == 8) begin
