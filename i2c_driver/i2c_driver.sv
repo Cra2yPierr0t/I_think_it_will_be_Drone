@@ -66,7 +66,8 @@ P   : Stop
 module i2c_driver(
         input   logic   clk,
         output  logic   SCL,
-        inout   logic   SDA
+        inout   logic   SDA,
+        output  logic   [7:0]   received_data
     );
 
 parameter BUSY = 4'b0000;
@@ -93,50 +94,57 @@ parameter D =   3'b011;
     logic   [3:0]   state       = BUSY;
     logic   [3:0]   pstate      = 4'b000;
 
-    logic   [3:0]   data_index  = 4'b0000;
-    logic   [7:0]   slave_addr  = 8'h55;
-    logic   [7:0]   received_data;
+    logic   [2:0]   data_index  = 3'b111;
+    logic   [6:0]   slave_addr  = 7'h68;
     
-    logic   [7:0]   i_reg_addr  = 8'h22; 
+    logic   [7:0]   i_reg_addr  = 8'h75; 
 
-    logic   [8:0]   slave_addr_w;
-    logic   [8:0]   slave_addr_r;
+    logic   [7:0]   slave_addr_w;
+    logic   [7:0]   slave_addr_r;
 
     logic           ack_flag;
 
-    assign slave_addr_w  = {W, slave_addr};
-    assign slave_addr_r  = {R, slave_addr};
+    logic   SDA_buf;
+// verilator lint_off BLKANDNBLK
+    logic   SDA_en = 0;
+// verilator lint_on BLKANDNBLK
+
+    assign slave_addr_w  = {slave_addr, W};
+    assign slave_addr_r  = {slave_addr, R};
+
     
 // 幸せのステートマシン
 
     always_ff @(posedge clk) begin
         case(state)
             BUSY    : begin
+                SDA_en <= 1'b1;
                 SCL <= 1'b1;
-                SDA = 1'b1;
+                SDA_buf <= 1'b1;
                 pstate <= state;
                 state <= START;
             end
             START   : begin
+                SDA_en <= 1'b1;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b1;
-                        SDA = 1'b1;
+                        SDA_buf <= 1'b1;
                         ABCD_cnt    <= B;
                     end
                     B: begin
                         SCL <= 1'b1;
-                        SDA = 1'b1;
+                        SDA_buf <= 1'b1;
                         ABCD_cnt    <= C;
                     end
                     C: begin
                         SCL <= 1'b1;
-                        SDA = 1'b0;
+                        SDA_buf <= 1'b0;
                         ABCD_cnt    <= D;
                     end
                     D: begin
                         SCL <= 1'b0;
-                        SDA = 1'b0;
+                        SDA_buf <= 1'b0;
                         ABCD_cnt    <= A;
                         pstate <= state;
                         state <= S_ADDR_W;
@@ -144,25 +152,26 @@ parameter D =   3'b011;
                 endcase
             end
             RSTART  : begin
+                SDA_en <= 1'b1;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
-                        SDA = 1'b1;
+                        SDA_buf <= 1'b1;
                         ABCD_cnt    <= B;
                     end
                     B: begin
                         SCL <= 1'b1;
-                        SDA = 1'b1;
+                        SDA_buf <= 1'b1;
                         ABCD_cnt    <= C;
                     end
                     C: begin
                         SCL <= 1'b1;
-                        SDA = 1'b0;
+                        SDA_buf <= 1'b0;
                         ABCD_cnt    <= D;
                     end
                     D: begin
                         SCL <= 1'b0;
-                        SDA = 1'b0;
+                        SDA_buf <= 1'b0;
                         ABCD_cnt    <= A;
                         pstate <= state;
                         state   <= S_ADDR_R;
@@ -170,25 +179,26 @@ parameter D =   3'b011;
                 endcase
             end
             STOP    : begin
+                SDA_en <= 1'b1;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
-                        SDA = 1'b0;
+                        SDA_buf <= 1'b0;
                         ABCD_cnt    <= B;
                     end
                     B: begin
                         SCL <= 1'b1;
-                        SDA = 1'b0;
+                        SDA_buf <= 1'b0;
                         ABCD_cnt    <= C;
                     end
                     C: begin
                         SCL <= 1'b1;
-                        SDA = 1'b1;
+                        SDA_buf <= 1'b1;
                         ABCD_cnt    <= D;
                     end
                     D: begin
                         SCL <= 1'b1;
-                        SDA = 1'b1;
+                        SDA_buf <= 1'b1;
                         ABCD_cnt    <= A;
                         pstate <= state;
                         state  <= BUSY;
@@ -196,161 +206,158 @@ parameter D =   3'b011;
                 endcase
             end
             S_ADDR_W    : begin 
+                SDA_en <= 1'b1;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
-                        SDA = slave_addr_w[data_index]; //valid data
+                        SDA_buf <= slave_addr_w[data_index]; //valid data
                         ABCD_cnt    <= B;
                     end
                     B: begin
                         SCL <= 1'b1;
-                        SDA = slave_addr_w[data_index]; //valid data
+                        SDA_buf <= slave_addr_w[data_index]; //valid data
                         ABCD_cnt    <= C;
                     end
                     C: begin
                         SCL <= 1'b1;
-                        SDA = slave_addr_w[data_index]; //valid data
+                        SDA_buf <= slave_addr_w[data_index]; //valid data
                         ABCD_cnt    <= D;
                     end
                     D: begin
                         SCL <= 1'b0;
-                        SDA = slave_addr_w[data_index]; //valid data
+                        SDA_buf <= slave_addr_w[data_index]; //valid data
                         ABCD_cnt    <= A;
-                        if(data_index == 4'b1000)begin
+                        if(data_index == 3'b000)begin
                             pstate      <= state;
                             state       <= ACK;
-                            data_index  <= 4'b0000;
+                            data_index  <= 3'b111;
                         end else begin
                             state       <= state;
-                            data_index  <= data_index + 1;
+                            data_index  <= data_index - 1;
                         end
                     end
                 endcase
             end
             S_ADDR_R    : begin 
+                SDA_en <= 1'b1;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
-                        SDA = slave_addr_r[data_index]; //valid data
+                        SDA_buf <= slave_addr_r[data_index]; //valid data
                         ABCD_cnt    <= B;
                     end
                     B: begin
                         SCL <= 1'b1;
-                        SDA = slave_addr_r[data_index]; //valid data
+                        SDA_buf <= slave_addr_r[data_index]; //valid data
                         ABCD_cnt    <= C;
                     end
                     C: begin
                         SCL <= 1'b1;
-                        SDA = slave_addr_r[data_index]; //valid data
+                        SDA_buf <= slave_addr_r[data_index]; //valid data
                         ABCD_cnt    <= D;
                     end
                     D: begin
                         SCL <= 1'b0;
-                        SDA = slave_addr_r[data_index]; //valid data
+                        SDA_buf <= slave_addr_r[data_index]; //valid data
                         ABCD_cnt    <= A;
-                        if(data_index == 4'b1000)begin
+                        if(data_index == 3'b000)begin
                             pstate      <= state;
                             state       <= ACK;
-                            data_index  <= 4'b0000;
+                            data_index  <= 3'b111;
                         end else begin
                             state       <= state;
-                            data_index  <= data_index + 1;
+                            data_index  <= data_index - 1;
                         end
                     end
                 endcase
             end
             REG_ADDR    : begin 
+                SDA_en <= 1'b1;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
-                        SDA = i_reg_addr[data_index[2:0]]; //valid data
+                        SDA_buf <= i_reg_addr[data_index]; //valid data
                         ABCD_cnt    <= B;
                     end
                     B: begin
                         SCL <= 1'b1;
-                        SDA = i_reg_addr[data_index[2:0]]; //valid data
+                        SDA_buf <= i_reg_addr[data_index]; //valid data
                         ABCD_cnt    <= C;
                     end
                     C: begin
                         SCL <= 1'b1;
-                        SDA = i_reg_addr[data_index[2:0]]; //valid data
+                        SDA_buf <= i_reg_addr[data_index]; //valid data
                         ABCD_cnt    <= D;
                     end
                     D: begin
                         SCL <= 1'b0;
-                        SDA = i_reg_addr[data_index[2:0]]; //valid data
+                        SDA_buf <= i_reg_addr[data_index]; //valid data
                         ABCD_cnt    <= A;
-                        if(data_index == 4'b0111)begin
+                        if(data_index == 3'b000)begin
                             pstate      <= state;
                             state       <= ACK;
-                            data_index  <= 4'b0000;
+                            data_index  <= 3'b111;
                         end else begin
                             state       <= state;
-                            data_index  <= data_index + 1;
+                            data_index  <= data_index - 1;
                         end
                     end
                 endcase
             end
             DATA    : begin
+                SDA_en <= 1'b0;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
-                        SDA = 1'bz;
                         ABCD_cnt <= B;
                     end
                     B: begin
                         SCL <= 1'b1;
-                        SDA = 1'bz; //valid data
-                        received_data[data_index[2:0]] = SDA;
+                        received_data[data_index] <= SDA;
                         ABCD_cnt <= C;
                     end
                     C: begin
                         SCL <= 1'b1;
-                        SDA = 1'bz; //valid data
-                        received_data[data_index[2:0]] = SDA;
+                        received_data[data_index] <= SDA;
                         ABCD_cnt <= D;
                     end
                     D: begin
                         SCL <= 1'b0;
-                        SDA = 1'bz;
                         ABCD_cnt <= A;
-                        if(data_index == 4'b0111)begin
+                        if(data_index == 3'b000)begin
                             pstate      <= state;
                             state       <= NACK;
-                            data_index  <= 4'b0000;
+                            data_index  <= 3'b111;
                         end else begin
                             state       <= state;
-                            data_index  <= data_index + 1;
+                            data_index  <= data_index - 1;
                         end
                     end
                 endcase
             end
             ACK     : begin
+                SDA_en = 1'b0;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
-                        SDA = 1'bz;
                         ack_flag <= 1'b1;
                         ABCD_cnt <= B;
                     end
                     B: begin
                         SCL <= 1'b1;
-                        SDA = 1'bz;
                         ack_flag <= !SDA;
                         ABCD_cnt <= C;
                     end
                     C: begin
                         SCL <= 1'b1;
-                        SDA = 1'bz;
                         ack_flag <= !SDA;
                         ABCD_cnt <= D;
                     end
                     D: begin
-                        SCL <= 1'b0;
-                        SDA = 1'bz;
-                        ABCD_cnt <= A;
                         pstate <= state;
                         if(ack_flag) begin
+                            SCL <= 1'b0;
+                            ABCD_cnt <= A;
                             if(pstate == S_ADDR_W) begin
                                 state <= REG_ADDR;
                             end else if(pstate == REG_ADDR) begin
@@ -361,37 +368,45 @@ parameter D =   3'b011;
                                 state <= ERR;
                             end
                         end else begin
-                            state <= ERR;
+                            SCL <= 1'b1;
+                            ABCD_cnt <= B;
+                            state <= state;
                         end
                     end
                 endcase
             end
             NACK    : begin
+                SDA_en = 1'b1;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
-                        SDA = 1'b1;
+                        SDA_buf <= 1'b1;
                         ABCD_cnt <= B;
                     end
                     B: begin
                         SCL <= 1'b1;
-                        SDA = 1'b1;
+                        SDA_buf <= 1'b1;
                         ABCD_cnt <= C;
                     end
                     C: begin
                         SCL <= 1'b1;
-                        SDA = 1'b1;
+                        SDA_buf <= 1'b1;
                         ABCD_cnt <= D;
                     end
                     D: begin
                         SCL <= 1'b0;
-                        SDA = 1'b1;
+                        SDA_buf <= 1'b1;
                         ABCD_cnt <= A;
                         pstate  <= state;
                         state   <= STOP;
                     end
                 endcase
             end
+            ERR     : begin
+                SCL <= 1'b1;
+                SDA_buf <= 1'b1;
+            end
         endcase
     end
+    assign SDA = SDA_en ? SDA_buf : 1'bz;
 endmodule
