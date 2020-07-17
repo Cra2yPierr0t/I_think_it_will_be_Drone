@@ -1,1 +1,7 @@
 accelerometer_test_v3/obj_dir
+accelerometer_test_v3/db
+accelerometer_test_v3/incremental_db
+accelerometer_test_v3/output_files
+accelerometer_test_v3/simulation
+accelerometer_test_v3/*.q*
+accelerometer_test_v3/*.r*
