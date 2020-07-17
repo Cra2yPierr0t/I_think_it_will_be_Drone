@@ -50,6 +50,11 @@ Read Sequence
 Master |S|AD+W|   |RA|   |S|AD+R|   |    |NACK|P|
 Slave  | |    |ACK|  |ACK| |    |ACK|DATA|    |P|
 
+Write Sequence
+
+Master |S|AD+W|   |RA|   |DATA|   |P|
+Slave  | |    |ACK|  |ACK|    |ACK|P|
+
 S   : Start
 AD  : Slave addr
 W   : Write bit (0)
@@ -77,10 +82,11 @@ parameter STOP = 4'b0011;
 parameter S_ADDR_W = 4'b0100;
 parameter S_ADDR_R = 4'b0101;
 parameter REG_ADDR = 4'b0110;
-parameter DATA = 4'b0111;
+parameter RDATA = 4'b0111;
 parameter ACK = 4'b1000;
 parameter NACK = 4'b1001;
 parameter ERR = 4'b1010;
+parameter WDATA = 4'b1011;
 
 parameter W =   1'b0;
 parameter R =   1'b1;
@@ -97,10 +103,14 @@ parameter D =   3'b011;
     logic   [2:0]   data_index  = 3'b111;
     logic   [6:0]   slave_addr  = 7'h68;
     
-    logic   [7:0]   i_reg_addr  = 8'h75; 
+    logic   [7:0]   i_reg_addr  = 8'h6B; 
 
     logic   [7:0]   slave_addr_w;
     logic   [7:0]   slave_addr_r;
+
+    logic   [7:0]   send_data   = 8'h00;
+
+    logic   r_en = 0;
 
     logic           ack_flag;
 
@@ -304,7 +314,40 @@ parameter D =   3'b011;
                     end
                 endcase
             end
-            DATA    : begin
+            WDATA   : begin 
+                SDA_en <= 1'b1;
+                case(ABCD_cnt)
+                    A: begin
+                        SCL <= 1'b0;
+                        SDA_buf <= send_data[data_index]; //valid data
+                        ABCD_cnt    <= B;
+                    end
+                    B: begin
+                        SCL <= 1'b1;
+                        SDA_buf <= send_data[data_index]; //valid data
+                        ABCD_cnt    <= C;
+                    end
+                    C: begin
+                        SCL <= 1'b1;
+                        SDA_buf <= send_data[data_index]; //valid data
+                        ABCD_cnt    <= D;
+                    end
+                    D: begin
+                        SCL <= 1'b0;
+                        SDA_buf <= send_data[data_index]; //valid data
+                        ABCD_cnt    <= A;
+                        if(data_index == 3'b000)begin
+                            pstate      <= state;
+                            state       <= ACK;
+                            data_index  <= 3'b111;
+                        end else begin
+                            state       <= state;
+                            data_index  <= data_index - 1;
+                        end
+                    end
+                endcase
+            end
+            RDATA    : begin
                 SDA_en <= 1'b0;
                 case(ABCD_cnt)
                     A: begin
@@ -361,9 +404,13 @@ parameter D =   3'b011;
                             if(pstate == S_ADDR_W) begin
                                 state <= REG_ADDR;
                             end else if(pstate == REG_ADDR) begin
-                                state <= RSTART;
+                                state <= r_en ? RSTART : WDATA;
+                                r_en  <= 1'b1;       // tmp
+                                i_reg_addr <= 8'h3d; // tmp
                             end else if(pstate == S_ADDR_R) begin
-                                state <= DATA;
+                                state <= RDATA;
+                            end else if(pstate == WDATA) begin
+                                state <= STOP;
                             end else begin
                                 state <= ERR;
                             end
