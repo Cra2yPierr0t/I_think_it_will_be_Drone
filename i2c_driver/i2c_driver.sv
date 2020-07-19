@@ -120,12 +120,14 @@ parameter D =   3'b011;
 
     //logic   r_en = 0;   //読み出し(R) : 1 , 書き込み(R) : 0
 
-    interface input_buf;
+    typedef struct packed {
         logic   [6:0]   slave_addr_buf;
         logic   r_en_buf;   //r_enが途中で変更されないようにするためのバッファ
         logic   [7:0]   send_data_buf;
         logic   [7:0]   i_reg_addr_buf;
-    endinterface
+    } input_buf_;
+
+    input_buf_ input_buf;
 
     logic   ack_flag;
 
@@ -135,8 +137,8 @@ parameter D =   3'b011;
     logic   SDA_en = 0;
 // verilator lint_on BLKANDNBLK
 
-    assign slave_addr_w  = {slave_addr_buf, W};
-    assign slave_addr_r  = {slave_addr_buf, R};
+    assign slave_addr_w  = {input_buf.slave_addr_buf, W};
+    assign slave_addr_r  = {input_buf.slave_addr_buf, R};
 
     
     always @(posedge run_req or posedge end_flag) begin
@@ -164,7 +166,7 @@ parameter D =   3'b011;
                 if(run_flag) begin
                     state <= START;
                 end else begin
-                    stete <= state;
+                    state <= state;
                 end
             end
             START   : begin                 //スタートコンディションの送信
@@ -448,7 +450,7 @@ parameter D =   3'b011;
                             if(pstate == S_ADDR_W) begin
                                 state <= REG_ADDR;
                             end else if(pstate == REG_ADDR) begin
-                                state <= r_en ? RSTART : WDATA;
+                                state <= input_buf.r_en_buf ? RSTART : WDATA;
                             end else if(pstate == S_ADDR_R) begin
                                 state <= RDATA;
                             end else if(pstate == WDATA) begin
