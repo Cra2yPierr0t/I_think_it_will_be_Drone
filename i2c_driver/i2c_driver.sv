@@ -72,7 +72,9 @@ module i2c_driver(
         input   logic   clk,
         output  logic   SCL,
         inout   logic   SDA,
+        input   logic   run_req,
         input   logic   [6:0]   slave_addr,     //slaveアドレス
+        input   logic   r_en,                   //読み出し(R) : 1 , 書き込み(R) : 0
         input   logic   [7:0]   send_data,      //書き込み用データ
         input   logic   [7:0]   i_reg_addr,     //slave内部のレジスタアドレス
         output  logic   [7:0]   received_data   //読み出しデータ
@@ -99,7 +101,6 @@ parameter B =   3'b001;
 parameter C =   3'b010;
 parameter D =   3'b011;
 
-    logic   run_req = 1'b0;
     logic   run_flag = 1'b0;
     logic   end_flag = 1'b0;
 
@@ -117,8 +118,14 @@ parameter D =   3'b011;
     //logic   [6:0]   slave_addr  = 7'h68;    //slveアドレス
     //logic   [7:0]   send_data   = 8'h00;    //書き込み用データ
 
-    logic   r_en = 0;   //読み出し(R) : 1 , 書き込み(R) : 0
-    logic   r_en_buf;   //r_enが途中で変更されないようにするためのバッファ
+    //logic   r_en = 0;   //読み出し(R) : 1 , 書き込み(R) : 0
+
+    interface input_buf;
+        logic   [6:0]   slave_addr_buf;
+        logic   r_en_buf;   //r_enが途中で変更されないようにするためのバッファ
+        logic   [7:0]   send_data_buf;
+        logic   [7:0]   i_reg_addr_buf;
+    endinterface
 
     logic   ack_flag;
 
@@ -128,8 +135,8 @@ parameter D =   3'b011;
     logic   SDA_en = 0;
 // verilator lint_on BLKANDNBLK
 
-    assign slave_addr_w  = {slave_addr, W};
-    assign slave_addr_r  = {slave_addr, R};
+    assign slave_addr_w  = {slave_addr_buf, W};
+    assign slave_addr_r  = {slave_addr_buf, R};
 
     
     always @(posedge run_req or posedge end_flag) begin
@@ -146,8 +153,10 @@ parameter D =   3'b011;
     always_ff @(posedge clk) begin
         case(state)
             BUSY    : begin
-                r_en_buf <= r_en;
-                r_en_buf <= r_en_buf;
+                input_buf.slave_addr_buf    <= slave_addr;
+                input_buf.r_en_buf          <= r_en;
+                input_buf.send_data_buf     <= send_data;
+                input_buf.i_reg_addr_buf    <= i_reg_addr;
                 SDA_en <= 1'b1;
                 SCL <= 1'b1;
                 SDA_buf <= 1'b1;
@@ -160,7 +169,7 @@ parameter D =   3'b011;
             end
             START   : begin                 //スタートコンディションの送信
                 SDA_en <= 1'b1;
-                r_en_buf <= r_en_buf;
+                input_buf <= input_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b1;
@@ -188,7 +197,7 @@ parameter D =   3'b011;
             end
             RSTART  : begin                 //Repスタートコンディションの送信
                 SDA_en <= 1'b1;
-                r_en_buf <= r_en_buf;
+                input_buf <= input_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
@@ -216,7 +225,7 @@ parameter D =   3'b011;
             end
             STOP    : begin             //ストップコンディションの送信
                 SDA_en <= 1'b1;
-                r_en_buf <= r_en_buf;
+                input_buf <= input_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
@@ -246,7 +255,7 @@ parameter D =   3'b011;
             end
             S_ADDR_W    : begin     //slaveアドレスの送信(W)
                 SDA_en <= 1'b1;
-                r_en_buf <= r_en_buf;
+                input_buf <= input_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
@@ -280,7 +289,7 @@ parameter D =   3'b011;
             end
             S_ADDR_R    : begin     //slaveアドレスの送信(R)
                 SDA_en <= 1'b1;
-                r_en_buf <= r_en_buf;
+                input_buf <= input_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
@@ -314,26 +323,26 @@ parameter D =   3'b011;
             end
             REG_ADDR    : begin     //slave内部のレジスタアドレスの送信
                 SDA_en <= 1'b1;
-                r_en_buf <= r_en_buf;
+                input_buf <= input_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
-                        SDA_buf <= i_reg_addr[data_index]; //valid data
+                        SDA_buf <= input_buf.i_reg_addr_buf[data_index]; //valid data
                         ABCD_cnt    <= B;
                     end
                     B: begin
                         SCL <= 1'b1;
-                        SDA_buf <= i_reg_addr[data_index]; //valid data
+                        SDA_buf <= input_buf.i_reg_addr_buf[data_index]; //valid data
                         ABCD_cnt    <= C;
                     end
                     C: begin
                         SCL <= 1'b1;
-                        SDA_buf <= i_reg_addr[data_index]; //valid data
+                        SDA_buf <= input_buf.i_reg_addr_buf[data_index]; //valid data
                         ABCD_cnt    <= D;
                     end
                     D: begin
                         SCL <= 1'b0;
-                        SDA_buf <= i_reg_addr[data_index]; //valid data
+                        SDA_buf <= input_buf.i_reg_addr_buf[data_index]; //valid data
                         ABCD_cnt    <= A;
                         if(data_index == 3'b000)begin
                             pstate      <= state;
@@ -348,26 +357,26 @@ parameter D =   3'b011;
             end
             WDATA   : begin         //Masterからslaveへの書き込み用データの送信
                 SDA_en <= 1'b1;
-                r_en_buf <= r_en_buf;
+                input_buf <= input_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
-                        SDA_buf <= send_data[data_index]; //valid data
+                        SDA_buf <= input_buf.send_data_buf[data_index]; //valid data
                         ABCD_cnt    <= B;
                     end
                     B: begin
                         SCL <= 1'b1;
-                        SDA_buf <= send_data[data_index]; //valid data
+                        SDA_buf <= input_buf.send_data_buf[data_index]; //valid data
                         ABCD_cnt    <= C;
                     end
                     C: begin
                         SCL <= 1'b1;
-                        SDA_buf <= send_data[data_index]; //valid data
+                        SDA_buf <= input_buf.send_data_buf[data_index]; //valid data
                         ABCD_cnt    <= D;
                     end
                     D: begin
                         SCL <= 1'b0;
-                        SDA_buf <= send_data[data_index]; //valid data
+                        SDA_buf <= input_buf.send_data_buf[data_index]; //valid data
                         ABCD_cnt    <= A;
                         if(data_index == 3'b000)begin
                             pstate      <= state;
@@ -382,7 +391,7 @@ parameter D =   3'b011;
             end
             RDATA    : begin        //slaveからMasterへの読み出しデータ受信
                 SDA_en <= 1'b0;
-                r_en_buf <= r_en_buf;
+                input_buf <= input_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
@@ -414,7 +423,7 @@ parameter D =   3'b011;
             end
             ACK     : begin         //ACK検知
                 SDA_en = 1'b0;
-                r_en_buf <= r_en_buf;
+                input_buf <= input_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
@@ -457,7 +466,7 @@ parameter D =   3'b011;
             end
             NACK    : begin         //NACK送信
                 SDA_en = 1'b1;
-                r_en_buf <= r_en_buf;
+                input_buf <= input_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
@@ -484,7 +493,7 @@ parameter D =   3'b011;
                 endcase
             end
             ERR     : begin     //エラー
-                r_en_buf <= r_en_buf;
+                input_buf <= input_buf;
                 SCL <= 1'b1;
                 SDA_buf <= 1'b1;
             end
