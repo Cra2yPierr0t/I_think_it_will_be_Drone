@@ -72,7 +72,10 @@ module i2c_driver(
         input   logic   clk,
         output  logic   SCL,
         inout   logic   SDA,
-        output  logic   [7:0]   received_data
+        input   logic   [6:0]   slave_addr,     //slaveアドレス
+        input   logic   [7:0]   send_data,      //書き込み用データ
+        input   logic   [7:0]   i_reg_addr,     //slave内部のレジスタアドレス
+        output  logic   [7:0]   received_data   //読み出しデータ
     );
 
 parameter BUSY = 4'b0000;
@@ -96,25 +99,31 @@ parameter B =   3'b001;
 parameter C =   3'b010;
 parameter D =   3'b011;
 
+    logic   run_req = 1'b0;
+    logic   run_flag = 1'b0;
+    logic   end_flag = 1'b0;
+
     logic   [2:0]   ABCD_cnt    = A;
     logic   [3:0]   state       = BUSY;
     logic   [3:0]   pstate      = 4'b000;
 
     logic   [2:0]   data_index  = 3'b111;
-    logic   [6:0]   slave_addr  = 7'h68;
     
-    logic   [7:0]   i_reg_addr  = 8'h6B; 
+    //logic   [7:0]   i_reg_addr  = 8'h6B; 
 
     logic   [7:0]   slave_addr_w;
     logic   [7:0]   slave_addr_r;
 
-    logic   [7:0]   send_data   = 8'h00;
+    //logic   [6:0]   slave_addr  = 7'h68;    //slveアドレス
+    //logic   [7:0]   send_data   = 8'h00;    //書き込み用データ
 
-    logic   r_en = 0;
+    logic   r_en = 0;   //読み出し(R) : 1 , 書き込み(R) : 0
+    logic   r_en_buf;   //r_enが途中で変更されないようにするためのバッファ
 
-    logic           ack_flag;
+    logic   ack_flag;
 
     logic   SDA_buf;
+
 // verilator lint_off BLKANDNBLK
     logic   SDA_en = 0;
 // verilator lint_on BLKANDNBLK
@@ -123,19 +132,35 @@ parameter D =   3'b011;
     assign slave_addr_r  = {slave_addr, R};
 
     
+    always @(posedge run_req or posedge end_flag) begin
+        if(run_req) begin           //run_reqが常にHighなら連続で動く
+            run_flag <= 1'b1;
+        end else if(end_flag) begin
+            run_flag <= 1'b0;
+        end
+    end
+
+    
 // 幸せのステートマシン
 
     always_ff @(posedge clk) begin
         case(state)
             BUSY    : begin
+                r_en_buf <= r_en;
+                r_en_buf <= r_en_buf;
                 SDA_en <= 1'b1;
                 SCL <= 1'b1;
                 SDA_buf <= 1'b1;
                 pstate <= state;
-                state <= START;
+                if(run_flag) begin
+                    state <= START;
+                end else begin
+                    stete <= state;
+                end
             end
-            START   : begin
+            START   : begin                 //スタートコンディションの送信
                 SDA_en <= 1'b1;
+                r_en_buf <= r_en_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b1;
@@ -161,8 +186,9 @@ parameter D =   3'b011;
                     end
                 endcase
             end
-            RSTART  : begin
+            RSTART  : begin                 //Repスタートコンディションの送信
                 SDA_en <= 1'b1;
+                r_en_buf <= r_en_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
@@ -188,8 +214,9 @@ parameter D =   3'b011;
                     end
                 endcase
             end
-            STOP    : begin
+            STOP    : begin             //ストップコンディションの送信
                 SDA_en <= 1'b1;
+                r_en_buf <= r_en_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
@@ -205,6 +232,7 @@ parameter D =   3'b011;
                         SCL <= 1'b1;
                         SDA_buf <= 1'b1;
                         ABCD_cnt    <= D;
+                        end_flag <= 1'b1; //end_flagのパルスを作る
                     end
                     D: begin
                         SCL <= 1'b1;
@@ -212,11 +240,13 @@ parameter D =   3'b011;
                         ABCD_cnt    <= A;
                         pstate <= state;
                         state  <= BUSY;
+                        end_flag <= 1'b0; //end_flagのパルスを作る
                     end
                 endcase
             end
-            S_ADDR_W    : begin 
+            S_ADDR_W    : begin     //slaveアドレスの送信(W)
                 SDA_en <= 1'b1;
+                r_en_buf <= r_en_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
@@ -248,8 +278,9 @@ parameter D =   3'b011;
                     end
                 endcase
             end
-            S_ADDR_R    : begin 
+            S_ADDR_R    : begin     //slaveアドレスの送信(R)
                 SDA_en <= 1'b1;
+                r_en_buf <= r_en_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
@@ -281,8 +312,9 @@ parameter D =   3'b011;
                     end
                 endcase
             end
-            REG_ADDR    : begin 
+            REG_ADDR    : begin     //slave内部のレジスタアドレスの送信
                 SDA_en <= 1'b1;
+                r_en_buf <= r_en_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
@@ -314,8 +346,9 @@ parameter D =   3'b011;
                     end
                 endcase
             end
-            WDATA   : begin 
+            WDATA   : begin         //Masterからslaveへの書き込み用データの送信
                 SDA_en <= 1'b1;
+                r_en_buf <= r_en_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
@@ -347,8 +380,9 @@ parameter D =   3'b011;
                     end
                 endcase
             end
-            RDATA    : begin
+            RDATA    : begin        //slaveからMasterへの読み出しデータ受信
                 SDA_en <= 1'b0;
+                r_en_buf <= r_en_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
@@ -356,12 +390,12 @@ parameter D =   3'b011;
                     end
                     B: begin
                         SCL <= 1'b1;
-                        received_data[data_index] <= SDA;
+                        received_data[data_index] <= SDA;   //valid data
                         ABCD_cnt <= C;
                     end
                     C: begin
                         SCL <= 1'b1;
-                        received_data[data_index] <= SDA;
+                        received_data[data_index] <= SDA;   //valid data
                         ABCD_cnt <= D;
                     end
                     D: begin
@@ -378,8 +412,9 @@ parameter D =   3'b011;
                     end
                 endcase
             end
-            ACK     : begin
+            ACK     : begin         //ACK検知
                 SDA_en = 1'b0;
+                r_en_buf <= r_en_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
@@ -405,8 +440,6 @@ parameter D =   3'b011;
                                 state <= REG_ADDR;
                             end else if(pstate == REG_ADDR) begin
                                 state <= r_en ? RSTART : WDATA;
-                                r_en  <= 1'b1;       // tmp
-                                i_reg_addr <= 8'h3d; // tmp
                             end else if(pstate == S_ADDR_R) begin
                                 state <= RDATA;
                             end else if(pstate == WDATA) begin
@@ -422,8 +455,9 @@ parameter D =   3'b011;
                     end
                 endcase
             end
-            NACK    : begin
+            NACK    : begin         //NACK送信
                 SDA_en = 1'b1;
+                r_en_buf <= r_en_buf;
                 case(ABCD_cnt)
                     A: begin
                         SCL <= 1'b0;
@@ -449,11 +483,12 @@ parameter D =   3'b011;
                     end
                 endcase
             end
-            ERR     : begin
+            ERR     : begin     //エラー
+                r_en_buf <= r_en_buf;
                 SCL <= 1'b1;
                 SDA_buf <= 1'b1;
             end
         endcase
     end
-    assign SDA = SDA_en ? SDA_buf : 1'bz;
+    assign SDA = SDA_en ? SDA_buf : 1'bz;   //トライステート・バッファ
 endmodule
