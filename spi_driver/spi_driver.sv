@@ -79,7 +79,8 @@ module spi_driver(
         output  logic   SCLK,
         output  logic   MOSI,
         input   logic   MISO,
-        output  logic   SS
+        output  logic   SS,
+        output  logic   [7:0]   read_data 
     );
 
 parameter A = 2'b00;
@@ -92,18 +93,20 @@ parameter STOP      = 5'b00001;
 parameter RW_DATA   = 5'b00010;
 parameter R_DATA    = 5'b00011;
 parameter W_DATA    = 5'b00100;
+parameter SEND_ADDR = 5'b00101;
 parameter BUSY      = 5'b01111;
 
     logic   [4:0]   state    = BUSY;
-    logic   [1:0]   ABCD_cnt = 2'b00;
-    logic   [7:0]   read_data;
-    logic   [7:0]   write_data;
-    logic   [5:0]   write_addr;
-    logic   [2:0]   data_index  = 3'b000;
+    logic   [1:0]   ABCD_cnt = A;
+    logic   [7:0]   write_data = 8'h00;
+    logic   [5:0]   write_addr = 6'h0f;
+    logic   [2:0]   data_index  = 3'b111;
+    logic           RW_sel = 1'b1;     //0: write, 1: read
+    logic           auto_inc = 1'b0;   //0: remain, 1:increment
 
     typedef struct packed {
         logic   [7:0]   write_data_buf;
-        logic   [5:0]   write_addr_buf;
+        logic   [7:0]   write_addr_ctrl_buf;
     } input_buf_;
 
     input_buf_ input_buf;
@@ -112,154 +115,143 @@ parameter BUSY      = 5'b01111;
         case(state)
             BUSY: begin
                 input_buf.write_data_buf <= write_data;
-                input_buf.write_addr_buf <= write_addr;
-                case(ABCD_cnt) begin
+                input_buf.write_addr_ctrl_buf <= {RW_sel, auto_inc, write_addr};
+                case(ABCD_cnt)
                     A: begin
                         SS      <= 1'b1;
                         SCLK    <= 1'b1;
+                        ABCD_cnt <= B;
                     end
                     B: begin
                         SS      <= 1'b1;
                         SCLK    <= 1'b1;
+                        ABCD_cnt <= C;
                     end
                     C: begin
                         SS      <= 1'b1;
                         SCLK    <= 1'b1;
+                        ABCD_cnt <= D;
                     end
                     D: begin
                         SS      <= 1'b1;
                         SCLK    <= 1'b1;
-                        state   <= //next state
+                        ABCD_cnt <= A;
+                        state   <= START;
                     end
-
-                end
+                endcase
             end
             START: begin
                 input_buf <= input_buf;
-                case(ABCD_cnt) begin
+                case(ABCD_cnt) 
                     A: begin
                         SS      <= 1'b1;
                         SCLK    <= 1'b1;
+                        ABCD_cnt <= B;
                     end
                     B: begin
                         SS      <= 1'b1;
                         SCLK    <= 1'b1;
+                        ABCD_cnt <= C;
                     end
                     C: begin
                         SS      <= 1'b0;
                         SCLK    <= 1'b1;
+                        ABCD_cnt <= D;
                     end
                     D: begin
                         SS      <= 1'b0;
                         SCLK    <= 1'b1;
-                        state   <= //next state
+                        ABCD_cnt <= A;
+                        state   <= SEND_ADDR;
                     end
-                end
+                endcase
             end
             STOP: begin
                 input_buf <= input_buf;
-                case(ABCD_cnt) begin
+                case(ABCD_cnt) 
                     A: begin
                         SS      <= 1'b0;
                         SCLK    <= 1'b1;
+                        ABCD_cnt <= B;
                     end
                     B: begin
                         SS      <= 1'b0;
                         SCLK    <= 1'b1;
+                        ABCD_cnt <= C;
                     end
                     C: begin
                         SS      <= 1'b1;
                         SCLK    <= 1'b1;
+                        ABCD_cnt <= D;
                     end
                     D: begin
                         SS      <= 1'b1;
                         SCLK    <= 1'b1;
-                        state   <= //next state
+                        ABCD_cnt <= A;
+                        state   <= BUSY;
                     end
-                end
+                endcase
             end
             RW_DATA: begin
                 input_buf <= input_buf;
-                case(ABCD_cnt) begin
-                    SS <= 1'b0;
+                SS <= 1'b0;
+                case(ABCD_cnt) 
                     A: begin
                         SCLK    <= 1'b0;
+                        ABCD_cnt <= B;
                     end
                     B: begin
                         SCLK    <= 1'b1;
                         read_data[data_index] <= MISO;
-                        MOSI    <= write_data_buf[data_index];
+                        MOSI    <= input_buf.write_data_buf[data_index];
+                        ABCD_cnt <= C;
                     end
                     C: begin
                         SCLK    <= 1'b1;
                         read_data[data_index] <= MISO;
-                        MOSI    <= write_data_buf[data_index];
+                        MOSI    <= input_buf.write_data_buf[data_index];
+                        ABCD_cnt <= D;
                     end
                     D: begin
-                        if(data_index == 3'b111) begin
-                            data_index <= 3'b0;
-                            state <= //next state
+                        if(data_index == 3'b000) begin
+                            data_index <= 3'b111;
+                            state <= STOP;
                         end else begin
-                            data_index  <= data_index + 3'b1;
-                            ABCD_cnt    <= A;
+                            data_index  <= data_index - 3'b1;
                         end
+                        ABCD_cnt <= A;
                         SCLK    <= 1'b0;
                     end
-                end
+                endcase
             end
-            R_DATA: begin
-                input_buf <= input_buf;
-                case(ABCD_cnt) begin
-                    SS <= 1'b0;
+            SEND_ADDR: begin
+                SS <= 1'b0;
+                case(ABCD_cnt) 
                     A: begin
                         SCLK    <= 1'b0;
+                        ABCD_cnt <= B;
                     end
                     B: begin
                         SCLK    <= 1'b1;
-                        read_data[data_index] <= MISO;
+                        MOSI    <= input_buf.write_addr_ctrl_buf[data_index];
+                        ABCD_cnt    <= C;
                     end
                     C: begin
                         SCLK    <= 1'b1;
-                        read_data[data_index] <= MISO;
+                        MOSI    <= input_buf.write_addr_ctrl_buf[data_index];
+                        ABCD_cnt    <= D;
                     end
                     D: begin
-                        if(data_index == 3'b111) begin
-                            data_index <= 3'b0;
-                            state <= //next state
+                        if(data_index == 3'b000) begin
+                            data_index <= 3'b111;
+                            state <= RW_DATA;
                         end else begin
-                            data_index  <= data_index + 3'b1;
-                            ABCD_cnt    <= A;
+                            data_index  <= data_index - 3'b1;
                         end
+                        ABCD_cnt    <= A;
                         SCLK    <= 1'b0;
                     end
-                end
-            end
-            W_DATA: begin
-                input_buf <= input_buf;
-                case(ABCD_cnt) begin
-                    SS <= 1'b0;
-                    A: begin
-                        SCLK    <= 1'b0;
-                    end
-                    B: begin
-                        SCLK    <= 1'b1;
-                        MOSI    <= write_data_buf[data_index];
-                    end
-                    C: begin
-                        SCLK    <= 1'b1;
-                        MOSI    <= write_data_buf[data_index];
-                    end
-                    D: begin
-                        if(data_index == 3'b111) begin
-                            data_index <= 3'b0;
-                            state <= //next state
-                        end else begin
-                            data_index  <= data_index + 3'b1;
-                            ABCD_cnt    <= A;
-                        end
-                        SCLK    <= 1'b0;
-                    end
-                end
+                endcase
             end
         endcase
     end
