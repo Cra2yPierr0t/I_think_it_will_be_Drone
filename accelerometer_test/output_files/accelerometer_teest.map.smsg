@@ -1,1 +1,0 @@
-Warning (10268): Verilog HDL information at accelerometer_driver.v(19): always construct contains both blocking and non-blocking assignments File: /home/kazu/I_think_it_will_be_Drone/accelerometer_test/accelerometer_driver.v Line: 19
