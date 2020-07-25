@@ -98,10 +98,10 @@ parameter BUSY      = 5'b01111;
 
     logic   [4:0]   state    = BUSY;
     logic   [1:0]   ABCD_cnt = A;
-    logic   [7:0]   write_data = 8'h00;
-    logic   [5:0]   write_addr = 6'h0f;
+    logic   [7:0]   write_data = 8'h77;
+    logic   [5:0]   write_addr = 6'h20;
     logic   [2:0]   data_index  = 3'b111;
-    logic           RW_sel = 1'b1;     //0: write, 1: read
+    logic           RW_sel = 1'b0;     //0: write, 1: read
     logic           auto_inc = 1'b0;   //0: remain, 1:increment
 
     typedef struct packed {
@@ -183,6 +183,8 @@ parameter BUSY      = 5'b01111;
                         SS      <= 1'b1;
                         SCLK    <= 1'b1;
                         ABCD_cnt <= D;
+                        write_addr <= 6'h2a;
+                        RW_sel <= 1'b1;
                     end
                     D: begin
                         SS      <= 1'b1;
