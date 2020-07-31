@@ -77,7 +77,8 @@ module i2c_driver(
         input   logic   r_en,                   //読み出し(R) : 1 , 書き込み(R) : 0
         input   logic   [7:0]   send_data,      //書き込み用データ
         input   logic   [7:0]   i_reg_addr,     //slave内部のレジスタアドレス
-        output  logic   [7:0]   received_data   //読み出しデータ
+        output  logic   [7:0]   received_data.  //読み出しデータ
+        output  logic   end_flag = 1'b0
     );
 
 parameter BUSY = 4'b0000;
@@ -102,7 +103,6 @@ parameter C =   3'b010;
 parameter D =   3'b011;
 
     logic   run_flag = 1'b0;
-    logic   end_flag = 1'b0;
 
     logic   [2:0]   ABCD_cnt    = A;
     logic   [3:0]   state       = BUSY;
