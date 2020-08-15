@@ -33,7 +33,7 @@ module i2c_driver_top(
     logic   [7:0]   send_datas[2:0];
     logic   [2:0]   num_datas[2:0];
 
-    always @(posedge master_clk) begin  //初期化とデータ読み出し
+    always @(posedge clk) begin  //初期化とデータ読み出し
         run_req <= 1'b1;
         i_reg_addr <= addrs[cnt];
         send_data <= send_datas[cnt];
@@ -61,7 +61,7 @@ module i2c_driver_top(
     assign num_datas[2] = 3'b010;
         
     i2c_driver  i2c_driver(
-            .clk            (master_clk     ),
+            .clk            (clk    ),
             .SCL            (SCL    ),
             .SDA            (SDA    ),
             .run_req        (run_req),
