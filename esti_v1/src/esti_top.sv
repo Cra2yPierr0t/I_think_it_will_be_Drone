@@ -3,10 +3,10 @@ module esti_top(
         output  logic       SCL = 1,
         inout   SDA,
         input   logic        reset,
-        output  logic [7:0]  led_out
+        output  logic [7:0]  led_out = 8'h00;
     );
 
-    logic   [63:0]  posi_out;
+    logic   [63:0]  posi_out = 64'h0000000000000000;
     logic   [15:0]  acc;
     logic   [7:0]   received_data[7:0];
     logic           end_flag;
@@ -31,6 +31,18 @@ module esti_top(
     end
 
     always_comb begin
-        led_out = posi_out[47:40];
+        if(64'h0 <= posi_out && posi_out < 64'h0000_0000_c26d_d3e6) begin
+            led_out <= 8'h1;
+        end else if(64'h0000_0000_c26d_d3e6 <= posi_out && posi_out < 64'h0000_0001_84db_a7cc) begin
+            led_out <= 8'h2;
+        end else if(64'h0000_0001_84db_a7cc <= posi_out && posi_out < 64'h0000_0002_4749_7bb2) begin
+            led_out <= 8'h3;
+        end else if(64'h0000_0002_4749_7bb2 <= posi_out && posi_out < 64'h0000_0003_09b7_4f98) begin
+            led_out <= 8'h4;
+        end else if(64'h0000_0003_09b7_4f98 <= posi_out && posi_out < 64'h0000_0003_cc25_237e) begin
+            led_out <= 8'h5;
+        end else begin
+            led_out <= 8'hff;
+        end
     end
 endmodule
