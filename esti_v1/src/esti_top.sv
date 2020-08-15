@@ -1,6 +1,6 @@
 module esti_top(
         input   logic        clk,
-        input   logic       SCL = 1,
+        output  logic       SCL = 1,
         inout   SDA,
         input   logic        reset,
         output  logic [7:0]  led_out
