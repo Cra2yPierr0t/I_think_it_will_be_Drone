@@ -4,7 +4,7 @@ module uart_core(
         output  logic TX,
         input   logic   [7:0] wdata,
         input   logic run_req,
-        output  logic end_flag = 1'b0
+        output  logic end_flag
     );
     
 parameter BUSY  = 4'h0;
