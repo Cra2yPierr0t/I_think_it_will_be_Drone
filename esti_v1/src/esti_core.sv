@@ -20,14 +20,14 @@ module esti_core(
 
     always_ff @(posedge clk, posedge reset) begin
         if(reset) begin
-            t0.posi     <= 64'h0;
-            t0.v        <= 64'h0;
-            acc         <= 64'h0;
-            posi_out    <= 64'h0;
+            t0.posi     <= 64'h0000000000000000;
+            t0.v        <= 64'h0000000000000000;
+            acc         <= 64'h0000000000000000;
+            posi_out    <= 64'h0000000000000000;
         end else begin
             t0.posi     <= t1.posi;
             t0.v        <= t1.v;
-            acc         <= {acc_in[15] ? 48'hffffffffffff : 48'h0, acc_in}; //符号拡張
+            acc         <= {acc_in[15] ? 48'hffffffffffff : 48'h000000000000, acc_in}; //符号拡張
             posi_out    <= t1.posi;
         end
     end

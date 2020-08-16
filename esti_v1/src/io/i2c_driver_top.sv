@@ -15,6 +15,7 @@ module i2c_driver_top(
     always @(posedge clk) begin
         if(clk_cnt == 8'h5) begin
             master_clk <= !master_clk;
+            clk_cnt = 8'h00;
         end else begin
 		      master_clk <= master_clk;
 		  end
@@ -50,7 +51,7 @@ module i2c_driver_top(
 
     assign addrs[0] = 8'h6b;
     assign addrs[1] = 8'h1c;
-    assign addrs[2] = 8'h43;
+    assign addrs[2] = 8'h3d;
 
     assign send_datas[0] = 8'h00;
     assign send_datas[1] = 8'b000_01_000;

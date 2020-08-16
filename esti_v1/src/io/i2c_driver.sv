@@ -145,7 +145,7 @@ parameter D =   3'b011;
     logic   SDA_en = 0;
 // verilator lint_on BLKANDNBLK
 
-    logic   [2:0] data_cnt = 3'b001;
+    logic   [2:0] data_cnt = 3'b000;
 
     assign slave_addr_w  = {input_buf.slave_addr_buf, W};
     assign slave_addr_r  = {input_buf.slave_addr_buf, R};
@@ -412,12 +412,12 @@ parameter D =   3'b011;
                     end
                     B: begin
                         SCL <= 1'b1;
-                        received_data[data_index][data_cnt] <= SDA;   //valid data
+                        received_data[data_cnt][data_index] <= SDA;   //valid data
                         ABCD_cnt <= C;
                     end
                     C: begin
                         SCL <= 1'b1;
-                        received_data[data_index][data_cnt] <= SDA;   //valid data
+                        received_data[data_cnt][data_index] <= SDA;   //valid data
                         ABCD_cnt <= D;
                     end
                     D: begin
