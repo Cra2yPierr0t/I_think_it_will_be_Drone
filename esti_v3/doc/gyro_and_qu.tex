@@ -1,0 +1,123 @@
+\documentclass[a4j]{jsarticle}
+\usepackage{amsmath, amssymb, type1cm, bm, here}
+\begin{document}
+\title{四元数と姿勢推定の諸々}
+\author{混沌の支配者、Cra2yPierr0t}
+\maketitle
+位置推定がお通夜なので姿勢推定やるわよ
+\section{基礎}
+姿勢と回転は4要素の四元数で表せる. とりあえず下の式を見て欲しい, 大丈夫大丈夫後で説明するから.
+\begin{align}
+    \bm{q} = \left[
+        \begin{array}{c}
+            q_w \\
+            q_x \\
+            q_y \\
+            q_z 
+        \end{array}
+    \right] = \left[
+        \begin{array}{c}
+            \cos\cfrac{\theta}{2}  \\
+            \bm{l}\sin\cfrac{\theta}{2} \\
+            \bm{m}\sin\cfrac{\theta}{2} \\
+            \bm{n}\sin\cfrac{\theta}{2} 
+        \end{array} 
+    \right] \nonumber 
+\end{align}
+ここで$\bm{l}, \bm{m}, \bm{n}$は各軸のベクトル, ただし$|\bm{l}+\bm{m}+\bm{n}|=1$. つまり物体の向いている方向を表している. $\theta$はその方向を軸にして何度回転してるかを表している. \\
+この$\bm{q}$を姿勢として, 次の$\bm{p}$を回転とする. どの位置ベクトルを軸に, 何度回転するかは姿勢と同一.
+\begin{align}
+    \bm{p} = \left[
+        \begin{array}{c}
+            p_w \\
+            p_x \\
+            p_y \\
+            p_z 
+        \end{array}
+    \right] = \left[
+        \begin{array}{c}
+            \cos\cfrac{\theta}{2}  \\
+            \bm{l}\sin\cfrac{\theta}{2} \\
+            \bm{m}\sin\cfrac{\theta}{2} \\
+            \bm{n}\sin\cfrac{\theta}{2} 
+        \end{array} 
+    \right] \nonumber 
+\end{align}
+それで姿勢$\bm{q}$が回転$\bm{p}$をした後の姿勢$\bm{r}$は, $\bm{q}$と$\bm{p}$の外積で求められる.
+\begin{align}
+    \bm{r} = \bm{p} \times \bm{q} \nonumber 
+\end{align}
+これが超嬉しい, 僕は嬉しくないですが. \\
+外積の概念を忘れた人(僕)の為に具体的な計算を以下に載せておく.
+\begin{align}
+    \bm{r} &= \bm{p} \times \bm{q} \nonumber \\
+           &= 
+           \left[
+                \begin{array}{cccc}
+                    q_w & -q_x & -q_y & -q_z \\
+                    q_x & q_w  & q_z  & -q_y \\
+                    q_y & -q_z  & q_w & q_x \\
+                    q_z & q_y  & -q_x & 0
+                \end{array}
+           \right]
+           \left[
+                \begin{array}{c}
+                    q_w \\
+                    q_x \\
+                    q_y \\
+                    q_z 
+                \end{array}
+           \right] \nonumber
+\end{align}
+まあこれはお得意のシストリックアレイで倒すかな.... \\ \\
+ここまでは基礎, 次はFPGAに実装するための様々を説明する.
+\section{実装指南}
+ジャイロセンサーが出力する値は角速度(rad/s). \\
+測定した角速度を$\omega_x, \omega_y, \omega_z$, サンプリングレートを$\Delta t$とすると, $\Delta t$間における回転$\bm{p}$は次の式で表せる.
+\begin{align}
+    \bm{p} = \Delta t\left[
+        \begin{array}{c}
+            0 \\
+            \omega_x \\
+            \omega_y \\
+            \omega_z 
+        \end{array}
+    \right] \nonumber
+\end{align}
+表せる, とか書いたけど巨人達が書いた記事の受け売りなので勉強しようね. \\
+それはさておき, 姿勢$\bm{q}$が回転$\bm{p}$をした後の姿勢$\bm{r}$は以下の式で求められる.
+\begin{align}
+    \bm{r} &= \bm{p} \times \bm{q} \nonumber \\
+           &= \Delta t
+           \left[
+                \begin{array}{c}
+                    0 \\
+                    \omega_x \\
+                    \omega_y \\
+                    \omega_z
+                \end{array}
+           \right] \times
+           \left[
+                \begin{array}{c}
+                    q_w \\
+                    q_x \\
+                    q_y \\
+                    q_z
+                \end{array}
+           \right] \nonumber
+\end{align}
+外積$\times$の方法は先に挙げた方法と同一. \\
+以上より, 時刻$t$における姿勢$\bm{q}(t)$は以下の式で計算可能. 可能なだけでもっと良い数値積分をするべきであるのを留意すべし.
+\begin{align}
+    \bm{q}(t+\Delta t) = \Delta t
+                       \left[
+                            \begin{array}{c}
+                                0 \\
+                                \omega_x \\
+                                \omega_y \\
+                                \omega_z 
+                            \end{array}
+                       \right] \times \bm{q}(t) \nonumber
+\end{align}
+これをそのまま実装するとノイズノリノリで終わってしまうので相補フィルタとかカルマンフィルタを実装する必要がある. それには加速度センサや地磁気センサの値を利用する.
+\end{document}
